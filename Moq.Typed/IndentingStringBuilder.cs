@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Moq.Typed;
 
-internal sealed class IndentationAwardeStringBuilder
+internal sealed class IndentingStringBuilder
 {
     private readonly StringBuilder builder;
     public int IndentationLevel { get; private set; }
@@ -14,21 +14,27 @@ internal sealed class IndentationAwardeStringBuilder
             throw new ArgumentException($"{nameof(indentationLevel)} lesser than 0 ({indentationLevel}).");
     }
 
-    public IndentationAwardeStringBuilder(StringBuilder builder, int indentationLevel)
+    public IndentingStringBuilder(int indentationLevel = 0)
     {
         AtLeastZero(indentationLevel);
-        this.builder = builder;
+        builder = new();
         IndentationLevel = indentationLevel;
     }
 
+    public override string ToString()
+        => builder.ToString();
+
+    public StringBuilder AppendIgnoringIndentation(string value)
+        => builder.Append(value);
+
     public StringBuilder Append(string value)
     {
-        IEnumerable<int> GetNewlineIndices(int startingFrom)
-        {
-            const string newline = @"
+        const string newline = @"
 ";
 
-            if (value.Length >= startingFrom - 1)
+        IEnumerable<int> GetNewlineIndices(int startingFrom)
+        {
+            if (value.Length <= startingFrom - 1)
                 yield break;
 
             var next = value.IndexOf(newline, startingFrom);
@@ -36,8 +42,10 @@ internal sealed class IndentationAwardeStringBuilder
             {
                 yield return next;
             }
+            else
+                yield break;
 
-            var rest = GetNewlineIndices(next + 1);
+            var rest = GetNewlineIndices(next + newline.Length);
             foreach (var next_ in rest)
                 yield return next_;
         }
@@ -55,19 +63,28 @@ internal sealed class IndentationAwardeStringBuilder
                 builder.Append("    ");
         }
 
-        var previousIndex = 0;
-        var buffer = ArrayPool<char>.Shared.Rent(2 ^ 8);
+        var previousNewline = 0 - newline.Length;
+        var buffer = ArrayPool<char>.Shared.Rent(256);
+        void AppendLine(int nextNewline)
+        {
+            var textStartAt = previousNewline + newline.Length;
+            var textLength = nextNewline - textStartAt;
+            if(textLength is not 0)
+                AppendIndentation();
+            var slice = value.AsSpan(textStartAt, textLength);
+            slice.CopyTo(buffer);
+            builder.Append(buffer, 0, textLength);
+            previousNewline = nextNewline;
+        }
         try
         {
-            foreach (var index in newlineIndices)
+            foreach (var index in newlineIndices) 
             {
-                if (index is 0)
-                    continue;
-
-                AppendIndentation();
-                value.AsSpan(previousIndex, index).CopyTo(buffer);
-                builder.Append(buffer, previousIndex, index);
+                AppendLine(index);
+                builder.AppendLine();
             }
+            if (previousNewline != value.Length - 1)
+                AppendLine(value.Length);
         }
         finally
         {
@@ -86,10 +103,10 @@ internal sealed class IndentationAwardeStringBuilder
 
     public readonly struct Indentiation : IDisposable
     {
-        private readonly IndentationAwardeStringBuilder builder;
+        private readonly IndentingStringBuilder builder;
         private readonly int times;
 
-        public Indentiation(IndentationAwardeStringBuilder builder, int times)
+        public Indentiation(IndentingStringBuilder builder, int times)
         {
             this.builder = builder;
             this.times = times;

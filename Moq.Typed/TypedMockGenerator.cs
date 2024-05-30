@@ -5,12 +5,13 @@ namespace Moq.Typed;
 
 internal static class TypedMockGenerator
 {
-    private static void WriteMethod(IMethodSymbol method, StringBuilder output)
+    private static void WriteMethod(IMethodSymbol method, IndentingStringBuilder output)
     {
         static string Comma(int i, int length) => i < length - 1 ? "," : string.Empty;
         output.Append($"public {method.ReturnType} {method.Name}");
 
-        var typeParametersSb = new StringBuilder();
+        string typeParametersOutput;
+        var typeParametersSb = new IndentingStringBuilder(output.IndentationLevel);
         var typeParameters = method.TypeParameters;
         if (typeParameters.Length is not 0)
         {
@@ -18,27 +19,31 @@ internal static class TypedMockGenerator
             for (int i = 0; i < typeParameters.Length; i++)
                 typeParametersSb.Append($"""
 
-                    {typeParameters[i]}{Comma(i, typeParameters.Length)}
+                        {typeParameters[i]}{Comma(i, typeParameters.Length)}
                     """);
             typeParametersSb.Append(">");
+            typeParametersOutput = typeParametersSb.ToString();
+            output.Append(typeParametersOutput);
         }
-        var typeParametersOutput = typeParametersSb.ToString();
-        output.Append(typeParametersOutput);
+        else
+            typeParametersOutput = string.Empty;
+        
 
         static string Predicate(IParameterSymbol parameter) => $"Func<{parameter.Type},bool>";
         var methodParameters = method.Parameters;
-        output.Append("(");
+        output.AppendIgnoringIndentation("(");
         for (int i = 0; i < methodParameters.Length; i++)
         {
             var parameter = methodParameters[i];
             output.Append($$"""
 
-                {{Predicate(parameter)}}? {{parameter.Name}} = null{{Comma(i, methodParameters.Length)}}
+                    {{Predicate(parameter)}}? {{parameter.Name}} = null{{Comma(i, methodParameters.Length)}}
                 """);
         }
 
+        output.AppendIgnoringIndentation(")");
         output.Append("""
-            )
+            
             {
             """);
         foreach (var parameter in methodParameters)
@@ -57,10 +62,10 @@ internal static class TypedMockGenerator
             var parameter = methodParameters[i];
             output.Append($"""
                 
-                It.Is({parameter.Name}Expression){Comma(i, methodParameters.Length)}
+                    It.Is({parameter.Name}Expression){Comma(i, methodParameters.Length)}
             """);
         }
-        output.Append("));");
+        output.AppendIgnoringIndentation("));");
         output.Append("""
             
             }
@@ -69,7 +74,7 @@ internal static class TypedMockGenerator
 
     public static void Run(SourceProductionContext context, INamedTypeSymbol forType)
     {
-        var output = new StringBuilder();
+        var output = new IndentingStringBuilder();
         var @namespace = forType.ContainingNamespace.ToDisplayString();
         var typeName = forType.ToDisplayString();
         var typeShortName = forType.Name;
@@ -108,10 +113,20 @@ internal static class TypedMockGenerator
                 && member is not IMethodSymbol { MethodKind: MethodKind.PropertyGet or MethodKind.PropertySet })
             .Cast<IMethodSymbol>();
 
-        foreach (var method in mockableMethods)
-            WriteMethod(method, output);
+        try
+        {
+            using var indentation = output.Indent(2);
+            foreach (var method in mockableMethods)
+                WriteMethod(method, output);
+            indentation.Dispose();
+        }
+        catch(Exception e)
+        {
+            throw;
+        }
 
         output.Append("""
+
                 }
             }
 

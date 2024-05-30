@@ -18,4 +18,8 @@
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Moq.Typed.Tests.Unit" />
+  </ItemGroup>
+
 </Project>
