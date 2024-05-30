@@ -1,4 +1,6 @@
 using Moq;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Moq.Typed.Tests.Integration;
 
@@ -12,6 +14,11 @@ public class Tests2
         first
             .Setup()
             .Method0();
+        var third = new Mock<IMockable2>();
+        third
+            .Setup()
+            .Count<int>(items => items.Any())
+            .Callback(parameters => { });
     }
 
     public interface IMockable0
@@ -22,5 +29,10 @@ public class Tests2
     public interface IMockable1
     {
         public void Method1();
+    }
+
+    public interface IMockable2
+    {
+        public int Count<T>(IEnumerable<T> items);
     }
 }

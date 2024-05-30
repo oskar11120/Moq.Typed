@@ -1,9 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Immutable;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Xml.Linq;
 
 namespace Moq.Typed;
 
@@ -40,23 +37,6 @@ public sealed class SourceGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        //var members = context
-        //    .CompilationProvider
-        //    .Select(
-        //        (compilation, token) =>
-        //        {
-        //            var mockCtors = compilation.GetTypeByMetadataName("Moq.Mock`1")?.Constructors;
-        //            var mockGet = compilation
-        //                .GetTypeByMetadataName("Moq.Mock")
-        //                ?.GetMembers()
-        //                .Where(member => member is IMethodSymbol method && method.Name is "Get")
-        //                .FirstOrDefault()
-        //                as IMethodSymbol;
-        //            return mockCtors.HasValue ?
-        //                new MockCreatingSymbols(mockCtors.Value, mockGet!) :
-        //                null;
-        //        });
-
         var mockedTypes = context
             .SyntaxProvider
             .CreateSyntaxProvider(

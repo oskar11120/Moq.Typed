@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -29,7 +30,7 @@ namespace Moq.Typed.Tests.Integration
             birthdayNumber ??= static _ => true;
             Expression<Func<int, bool>>? birthdayNumberExpression = argument => birthdayNumber(argument);
             return mock.Setup(mockable => mockable.Method0(
-                It.Is(birthdayNumberExpression)));
+                It.Is(birthdayNumberExpression)))
         }
     }
 }
