@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Text;
 
 namespace Moq.Typed;
 
@@ -8,7 +7,10 @@ internal static class TypedMockGenerator
     private static void WriteMethod(IMethodSymbol method, IndentingStringBuilder output)
     {
         static string Comma(int i, int length) => i < length - 1 ? "," : string.Empty;
-        output.Append($"public {method.ReturnType} {method.Name}");
+        output.Append($"""
+
+            public {method.ReturnType} {method.Name}
+            """);
 
         string typeParametersOutput;
         var typeParametersSb = new IndentingStringBuilder(output.IndentationLevel);
