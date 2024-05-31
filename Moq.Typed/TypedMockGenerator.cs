@@ -102,7 +102,7 @@ internal static class TypedMockGenerator
                 setup.{{name}}(new {{"Internal" + delegateTypeName + genericTypeParameters}}(
                     ({{string.Join(", ", paramterTexts)}}) => 
                     {
-                        var parameters = new {{containerTypeNameWithGenericParameters}}
+                        var __parameters__ = new {{containerTypeNameWithGenericParameters}}
                         {
             """);
 
@@ -111,7 +111,7 @@ internal static class TypedMockGenerator
 
             output.AppendLine($$"""
                         };
-                        {{(callbackReturns ? "return " : null)}}{{parameterDelegateName}}({{(anyRefs ? "ref " : null)}}parameters);
+                        {{(callbackReturns ? "return " : null)}}{{parameterDelegateName}}({{(anyRefs ? "ref " : null)}}__parameters__);
                     }));
                 return this;
             }
@@ -122,6 +122,7 @@ internal static class TypedMockGenerator
 
         if (!method.ReturnsVoid)
         {
+            // TODO
             //output.AppendLine($$"""
 
             //public {{typeNameWithGenericParameters}} Returns({{method.ReturnType}} value)
@@ -284,12 +285,15 @@ internal static class TypedMockGenerator
 
     public static void Run(SourceProductionContext context, INamedTypeSymbol forType)
     {
+        static string TypeFullName(INamedTypeSymbol type)
+            => (type.ContainingType is INamedTypeSymbol existing ? TypeFullName(existing) + "_" : null) + type.Name;
+
         var output = new IndentingStringBuilder();
         var @namespace = forType.ContainingNamespace.ToDisplayString();
         var typeName = forType.ToDisplayString();
-        var typeShortName = forType.Name;
+        var typeShortName = TypeFullName(forType);
         var mockTypeName = $"Mock<{typeName}>";
-        var setupsTypeName = $"TypedMockFor{typeShortName}";
+        var setupsTypeName = $"TypedMockFor_{typeShortName}";
         var generatedCodeAttribute = "[GeneratedCode(\"Moq.Typed\", null)]";
         var classesSource = $$"""
             using Moq;
@@ -301,7 +305,7 @@ internal static class TypedMockGenerator
             namespace {{@namespace}}
             {
                 {{generatedCodeAttribute}}
-                internal static class TypedMockSetupExtensionFor{{typeShortName}}
+                internal static class TypedMockSetupExtensionFor_{{typeShortName}}
                 {
                     public static {{setupsTypeName}} Setup(this {{mockTypeName}} mock)
                         => new {{setupsTypeName}}(mock);
