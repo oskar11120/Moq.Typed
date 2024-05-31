@@ -12,6 +12,7 @@ public class GeneratedCodeShould
         first
             .Setup()
             .Method0()
+            .Callback(parameters => { })
             .Returns(parameters =>
             {
                 Assert.That(parameters.phoneNumber, Is.EqualTo(1));

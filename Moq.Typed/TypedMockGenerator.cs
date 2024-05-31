@@ -58,7 +58,7 @@ internal static class TypedMockGenerator
             {
             """);
 
-        using var indentation_insideClass = output.Indent(1);  
+        using var indentation_insideClass = output.Indent();
         output.AppendLine($$"""
             private readonly {{setupTypeName}} setup;
             
@@ -70,31 +70,35 @@ internal static class TypedMockGenerator
 
         var parameterTypesText = forMethod.Parameters.Length is 0 ?
             string.Empty :
-            $"""
-            <
-                    {string.Join(", ", forMethod.Parameters.Select(parameter => parameter.Type.ToDisplayString()))}>
-            """;
+            $"<{string.Join(", ", forMethod.Parameters.Select(parameter => parameter.Type.ToDisplayString()))}>";
         var parameterNames = forMethod.Parameters.Select(parameter => parameter.Name);
 
-        output.AppendLine();
-        output.AppendLine($"public {typeNameWithGenericParameters} Callback(Action<{containerTypeNameWithGenericParameters}> callback)");
-        output.AppendLine($$"""
+        void WriteMethod(string name, string parameterDelegateType, string parameterDelegateName, bool callbackReturns)
+        {
+            output.AppendLine();
+            output.AppendLine($"public {typeNameWithGenericParameters} {name}({parameterDelegateType} {parameterDelegateName})");
+            output.AppendLine($$"""
             {
-                setup.Callback{{parameterTypesText}}(
+                setup.{{name}}{{parameterTypesText}}(
                     ({{string.Join(", ", parameterNames)}}) => 
                     {
                         var parameters = new {{containerTypeNameWithGenericParameters}}
                         {
             """);
-        foreach (var name in parameterNames)
-            output.AppendLine($"{name} = {name}", 4);
-        output.AppendLine($$"""
+
+            foreach (var parameterName in parameterNames)
+                output.AppendLine($"{parameterName} = {parameterName}", 5);
+
+            output.AppendLine($$"""
                         };
-                        callback(parameters);
+                        {{(callbackReturns ? "return " : null)}}{{parameterDelegateName}}(parameters);
                     });
                 return this;
             }
             """);
+        }
+
+        WriteMethod("Callback", $"Action<{containerTypeNameWithGenericParameters}>", "callback", false);
 
         if (!forMethod.ReturnsVoid)
         {
@@ -104,27 +108,7 @@ internal static class TypedMockGenerator
                 => Returns(_ => value);
             """);
 
-            output.AppendLine($$"""
-
-            public {{typeNameWithGenericParameters}} Returns(Func<{{containerTypeNameWithGenericParameters}}, {{forMethod.ReturnType}}> valueFunction)
-            """);
-            output.AppendLine($$"""
-            {
-                setup.Returns{{parameterTypesText}}(
-                    ({{string.Join(", ", parameterNames)}}) => 
-                    {
-                        var parameters = new {{containerTypeNameWithGenericParameters}}
-                        {
-            """);
-            foreach (var name in parameterNames)
-                output.AppendLine($"{name} = {name}", 5);
-            output.AppendLine($$"""
-                        };
-                        return valueFunction(parameters);
-                    });
-                return this;
-            }
-            """);
+            WriteMethod("Returns", $"Func<{containerTypeNameWithGenericParameters}, {forMethod.ReturnType}>", "valueFunction", true);
         }
 
         indentation_insideClass.Dispose();
@@ -201,7 +185,7 @@ internal static class TypedMockGenerator
         output.AppendLine("{");
         using var indentation_insideMethod = output.Indent(1);
         foreach (var parameter in methodParameters)
-            if(parameter.RefKind is RefKind.None)
+            if (parameter.RefKind is RefKind.None)
                 output.AppendLine($"""
                     {parameter.Name} ??= static _ => true;
                     Expression<{Predicate(parameter)}> {parameter.Name}Expression = argument => {parameter.Name}(argument);
