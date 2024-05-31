@@ -23,77 +23,45 @@ namespace Moq.Typed.Tests.Unit
         {
             this.mock = mock;
         }
-        public class PublicParameters
+        public class FirstParameters
         {
+            public object someObject { get; init; }
         }
 
-        public class PublicSetup
-        {
-            private readonly ISetup<Moq.Typed.Tests.Unit.ITestable> setup;
-
-            public PublicSetup(ISetup<Moq.Typed.Tests.Unit.ITestable> setup)
-            {
-                this.setup = setup;
-            }
-
-            public PublicSetup Callback(Action<PublicParameters> callback)
-            {
-                setup.Callback(
-                    () => 
-                    {
-                        var parameters = new PublicParameters
-                        {
-                        };
-                        callback(parameters);
-                    });
-                return this;
-            }
-        }
-
-        public PublicSetup Public()
-        {
-            var __setup__ = mock.Setup(mock => mock.Public());
-            return new PublicSetup(__setup__);
-        }
-        public class InternalParameters
-        {
-            public readonly object someObject
-        }
-
-        public class InternalSetup
+        public class FirstSetup
         {
             private readonly ISetup<Moq.Typed.Tests.Unit.ITestable, int> setup;
 
-            public InternalSetup(ISetup<Moq.Typed.Tests.Unit.ITestable, int> setup)
+            public FirstSetup(ISetup<Moq.Typed.Tests.Unit.ITestable, int> setup)
             {
                 this.setup = setup;
             }
 
-            public InternalSetup Callback(Action<InternalParameters> callback)
+            public FirstSetup Callback(Action<FirstParameters> callback)
             {
                 setup.Callback<object>(
                     (someObject) => 
                     {
-                        var parameters = new InternalParameters
+                        var parameters = new FirstParameters
                         {
-                            someObject = someObject
+                                someObject = someObject
                         };
                         callback(parameters);
                     });
                 return this;
             }
 
-            public InternalSetup Returns(int value)
+            public FirstSetup Returns(int value)
                 => Returns(_ => value);
 
-            public InternalSetup Returns(Func<InternalParameters, int> valueFunction)
+            public FirstSetup Returns(Func<FirstParameters, int> valueFunction)
             {
                 setup.Returns<object>(
                     (someObject) => 
                     {
-                        var parameters = new InternalParameters
+                        var parameters = new FirstParameters
                         {
-                            someObject = someObject
+                                someObject = someObject
                         };
                         return valueFunction(parameters);
                     });
@@ -101,14 +69,14 @@ namespace Moq.Typed.Tests.Unit
             }
         }
 
-        public InternalSetup Internal(
+        public FirstSetup First(
             Func<object, bool>? someObject = null)
         {
             someObject ??= static _ => true;
             Expression<Func<object, bool>> someObjectExpression = argument => someObject(argument);
-            var __setup__ = mock.Setup(mock => mock.Internal(
+            var __setup__ = mock.Setup(mock => mock.First(
                 It.Is(someObjectExpression)));
-            return new InternalSetup(__setup__);
+            return new FirstSetup(__setup__);
         }
     }
 }

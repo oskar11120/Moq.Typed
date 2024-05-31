@@ -176,7 +176,7 @@ internal class SourceGeneratorShould
             """
             public interface ITestable
             {
-                void Method(ref int refParameter);
+                int Method(ref int refParameter);
             }
             """),
         [TestSourceId.InParameter] = NewSource(

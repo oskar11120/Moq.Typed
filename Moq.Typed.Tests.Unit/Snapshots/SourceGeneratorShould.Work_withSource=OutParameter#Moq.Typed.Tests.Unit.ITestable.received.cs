@@ -23,10 +23,9 @@ namespace Moq.Typed.Tests.Unit
         {
             this.mock = mock;
         }
-
-        public readonly ref struct MethodParameters
+        public class MethodParameters
         {
-            public readonly ref int refParameter
+            public int outParameter { get; init; }
         }
 
         public class MethodSetup
@@ -41,11 +40,11 @@ namespace Moq.Typed.Tests.Unit
             public MethodSetup Callback(Action<MethodParameters> callback)
             {
                 setup.Callback<int>(
-                    (refParameter) => 
+                    (outParameter) => 
                     {
                         var parameters = new MethodParameters
                         {
-                            refParameter = refParameter
+                                outParameter = outParameter
                         };
                         callback(parameters);
                     });
@@ -53,10 +52,11 @@ namespace Moq.Typed.Tests.Unit
             }
         }
 
-        public MethodSetup Method()
+        public MethodSetup Method(
+            int outParameter = default(int)!)
         {
             var __setup__ = mock.Setup(mock => mock.Method(
-                ref It.Ref<int>.IsAny));
+                out outParameter));
             return new MethodSetup(__setup__);
         }
     }
