@@ -8,25 +8,36 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
+
         public class IncrementParameters
         {
-            public int number { get; init; }
+            public int number;
         }
+
+        private delegate void InternalIncrementCallback(
+            int number);
+
+        private delegate int InternalIncrementValueFunction(
+            int number);
+
+        public delegate void IncrementCallback(IncrementParameters parameters);
+
+        public delegate int IncrementValueFunction(IncrementParameters parameters);
 
         public class IncrementSetup
         {
@@ -37,36 +48,31 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public IncrementSetup Callback(Action<IncrementParameters> callback)
+            public IncrementSetup Callback(IncrementCallback callback)
             {
-                setup.Callback<
-                    int>(
-                    (number) => 
+                setup.Callback(new InternalIncrementCallback(
+                    (int number) => 
                     {
-                        var parameters = new IncrementParameters
+                        var __parameters__ = new IncrementParameters
                         {
                             number = number
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public IncrementSetup Returns(int value)
-                => Returns(_ => value);
-
-            public IncrementSetup Returns(Func<IncrementParameters, int> valueFunction)
+            public IncrementSetup Returns(IncrementValueFunction valueFunction)
             {
-                setup.Returns<
-                    int>(
-                    (number) => 
+                setup.Returns(new InternalIncrementValueFunction(
+                    (int number) => 
                     {
-                        var parameters = new IncrementParameters
+                        var __parameters__ = new IncrementParameters
                         {
-                                number = number
+                            number = number
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }

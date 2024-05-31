@@ -8,25 +8,36 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
+
         public class MethodParameters<TInput>
         {
-            public TInput Parameter { get; init; }
+            public TInput Parameter;
         }
+
+        private delegate void InternalMethodCallback<TInput>(
+            TInput Parameter);
+
+        private delegate int InternalMethodValueFunction<TInput>(
+            TInput Parameter);
+
+        public delegate void MethodCallback<TInput>(MethodParameters<TInput> parameters);
+
+        public delegate int MethodValueFunction<TInput>(MethodParameters<TInput> parameters);
 
         public class MethodSetup<TInput>
         {
@@ -37,36 +48,31 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public MethodSetup<TInput> Callback(Action<MethodParameters<TInput>> callback)
+            public MethodSetup<TInput> Callback(MethodCallback<TInput> callback)
             {
-                setup.Callback<
-                    TInput>(
-                    (Parameter) => 
+                setup.Callback(new InternalMethodCallback<TInput>(
+                    (TInput Parameter) => 
                     {
-                        var parameters = new MethodParameters<TInput>
+                        var __parameters__ = new MethodParameters<TInput>
                         {
                             Parameter = Parameter
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public MethodSetup<TInput> Returns(int value)
-                => Returns(_ => value);
-
-            public MethodSetup<TInput> Returns(Func<MethodParameters<TInput>, int> valueFunction)
+            public MethodSetup<TInput> Returns(MethodValueFunction<TInput> valueFunction)
             {
-                setup.Returns<
-                    TInput>(
-                    (Parameter) => 
+                setup.Returns(new InternalMethodValueFunction<TInput>(
+                    (TInput Parameter) => 
                     {
-                        var parameters = new MethodParameters<TInput>
+                        var __parameters__ = new MethodParameters<TInput>
                         {
-                                Parameter = Parameter
+                            Parameter = Parameter
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }

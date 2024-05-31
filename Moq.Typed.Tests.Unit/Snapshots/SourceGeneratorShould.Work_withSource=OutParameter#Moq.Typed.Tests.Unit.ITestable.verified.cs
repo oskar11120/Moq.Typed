@@ -8,25 +8,31 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
+
         public class MethodParameters
         {
-            public int outParameter { get; init; }
+            public int outParameter;
         }
+
+        private delegate void InternalMethodCallback(
+            int outParameter);
+
+        public delegate void MethodCallback(MethodParameters parameters);
 
         public class MethodSetup
         {
@@ -37,18 +43,17 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public MethodSetup Callback(Action<MethodParameters> callback)
+            public MethodSetup Callback(MethodCallback callback)
             {
-                setup.Callback<
-                    int>(
-                    (outParameter) => 
+                setup.Callback(new InternalMethodCallback(
+                    (int outParameter) => 
                     {
-                        var parameters = new MethodParameters
+                        var __parameters__ = new MethodParameters
                         {
                             outParameter = outParameter
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
         }

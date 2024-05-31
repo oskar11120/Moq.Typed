@@ -8,24 +8,29 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
+
         public class PublicParameters
         {
         }
+
+        private delegate void InternalPublicCallback();
+
+        public delegate void PublicCallback(PublicParameters parameters);
 
         public class PublicSetup
         {
@@ -36,16 +41,16 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public PublicSetup Callback(Action<PublicParameters> callback)
+            public PublicSetup Callback(PublicCallback callback)
             {
-                setup.Callback(
+                setup.Callback(new InternalPublicCallback(
                     () => 
                     {
-                        var parameters = new PublicParameters
+                        var __parameters__ = new PublicParameters
                         {
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
         }
@@ -55,10 +60,21 @@ namespace Moq.Typed.Tests.Unit
             var __setup__ = mock.Setup(mock => mock.Public());
             return new PublicSetup(__setup__);
         }
+
         public class InternalParameters
         {
-            public readonly object someObject
+            public object someObject;
         }
+
+        private delegate void InternalInternalCallback(
+            object someObject);
+
+        private delegate int InternalInternalValueFunction(
+            object someObject);
+
+        public delegate void InternalCallback(InternalParameters parameters);
+
+        public delegate int InternalValueFunction(InternalParameters parameters);
 
         public class InternalSetup
         {
@@ -69,34 +85,31 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public InternalSetup Callback(Action<InternalParameters> callback)
+            public InternalSetup Callback(InternalCallback callback)
             {
-                setup.Callback<object>(
-                    (someObject) => 
+                setup.Callback(new InternalInternalCallback(
+                    (object someObject) => 
                     {
-                        var parameters = new InternalParameters
+                        var __parameters__ = new InternalParameters
                         {
                             someObject = someObject
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public InternalSetup Returns(int value)
-                => Returns(_ => value);
-
-            public InternalSetup Returns(Func<InternalParameters, int> valueFunction)
+            public InternalSetup Returns(InternalValueFunction valueFunction)
             {
-                setup.Returns<object>(
-                    (someObject) => 
+                setup.Returns(new InternalInternalValueFunction(
+                    (object someObject) => 
                     {
-                        var parameters = new InternalParameters
+                        var __parameters__ = new InternalParameters
                         {
                             someObject = someObject
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }

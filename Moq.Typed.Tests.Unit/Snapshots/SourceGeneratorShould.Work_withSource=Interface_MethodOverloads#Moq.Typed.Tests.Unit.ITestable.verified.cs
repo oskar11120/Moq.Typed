@@ -8,24 +8,33 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
+
         public class MethodParameters
         {
         }
+
+        private delegate void InternalMethodCallback();
+
+        private delegate int InternalMethodValueFunction();
+
+        public delegate void MethodCallback(MethodParameters parameters);
+
+        public delegate int MethodValueFunction(MethodParameters parameters);
 
         public class MethodSetup
         {
@@ -36,32 +45,29 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public MethodSetup Callback(Action<MethodParameters> callback)
+            public MethodSetup Callback(MethodCallback callback)
             {
-                setup.Callback(
+                setup.Callback(new InternalMethodCallback(
                     () => 
                     {
-                        var parameters = new MethodParameters
+                        var __parameters__ = new MethodParameters
                         {
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public MethodSetup Returns(int value)
-                => Returns(_ => value);
-
-            public MethodSetup Returns(Func<MethodParameters, int> valueFunction)
+            public MethodSetup Returns(MethodValueFunction valueFunction)
             {
-                setup.Returns(
+                setup.Returns(new InternalMethodValueFunction(
                     () => 
                     {
-                        var parameters = new MethodParameters
+                        var __parameters__ = new MethodParameters
                         {
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }
@@ -71,10 +77,21 @@ namespace Moq.Typed.Tests.Unit
             var __setup__ = mock.Setup(mock => mock.Method());
             return new MethodSetup(__setup__);
         }
+
         public class MethodParameters1
         {
-            public int Parameter { get; init; }
+            public int Parameter;
         }
+
+        private delegate void InternalMethodCallback1(
+            int Parameter);
+
+        private delegate int InternalMethodValueFunction1(
+            int Parameter);
+
+        public delegate void MethodCallback1(MethodParameters1 parameters);
+
+        public delegate int MethodValueFunction1(MethodParameters1 parameters);
 
         public class MethodSetup1
         {
@@ -85,36 +102,31 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public MethodSetup1 Callback(Action<MethodParameters1> callback)
+            public MethodSetup1 Callback(MethodCallback1 callback)
             {
-                setup.Callback<
-                    int>(
-                    (Parameter) => 
+                setup.Callback(new InternalMethodCallback1(
+                    (int Parameter) => 
                     {
-                        var parameters = new MethodParameters1
+                        var __parameters__ = new MethodParameters1
                         {
                             Parameter = Parameter
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public MethodSetup1 Returns(int value)
-                => Returns(_ => value);
-
-            public MethodSetup1 Returns(Func<MethodParameters1, int> valueFunction)
+            public MethodSetup1 Returns(MethodValueFunction1 valueFunction)
             {
-                setup.Returns<
-                    int>(
-                    (Parameter) => 
+                setup.Returns(new InternalMethodValueFunction1(
+                    (int Parameter) => 
                     {
-                        var parameters = new MethodParameters1
+                        var __parameters__ = new MethodParameters1
                         {
-                                Parameter = Parameter
+                            Parameter = Parameter
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }

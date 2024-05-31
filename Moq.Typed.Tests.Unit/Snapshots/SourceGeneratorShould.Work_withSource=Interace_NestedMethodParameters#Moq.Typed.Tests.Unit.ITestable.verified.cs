@@ -8,25 +8,36 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
+
         public class FirstParameters
         {
-            public Moq.Typed.Tests.Unit.Parameters.First parameter { get; init; }
+            public Moq.Typed.Tests.Unit.Parameters.First parameter;
         }
+
+        private delegate void InternalFirstCallback(
+            Moq.Typed.Tests.Unit.Parameters.First parameter);
+
+        private delegate int InternalFirstValueFunction(
+            Moq.Typed.Tests.Unit.Parameters.First parameter);
+
+        public delegate void FirstCallback(FirstParameters parameters);
+
+        public delegate int FirstValueFunction(FirstParameters parameters);
 
         public class FirstSetup
         {
@@ -37,36 +48,31 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public FirstSetup Callback(Action<FirstParameters> callback)
+            public FirstSetup Callback(FirstCallback callback)
             {
-                setup.Callback<
-                    Moq.Typed.Tests.Unit.Parameters.First>(
-                    (parameter) => 
+                setup.Callback(new InternalFirstCallback(
+                    (Moq.Typed.Tests.Unit.Parameters.First parameter) => 
                     {
-                        var parameters = new FirstParameters
+                        var __parameters__ = new FirstParameters
                         {
                             parameter = parameter
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public FirstSetup Returns(int value)
-                => Returns(_ => value);
-
-            public FirstSetup Returns(Func<FirstParameters, int> valueFunction)
+            public FirstSetup Returns(FirstValueFunction valueFunction)
             {
-                setup.Returns<
-                    Moq.Typed.Tests.Unit.Parameters.First>(
-                    (parameter) => 
+                setup.Returns(new InternalFirstValueFunction(
+                    (Moq.Typed.Tests.Unit.Parameters.First parameter) => 
                     {
-                        var parameters = new FirstParameters
+                        var __parameters__ = new FirstParameters
                         {
-                                parameter = parameter
+                            parameter = parameter
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }

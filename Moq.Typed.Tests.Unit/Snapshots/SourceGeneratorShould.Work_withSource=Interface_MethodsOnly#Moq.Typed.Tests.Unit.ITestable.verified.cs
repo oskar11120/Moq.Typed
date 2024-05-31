@@ -8,24 +8,29 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
+
         public class FirstParameters
         {
         }
+
+        private delegate void InternalFirstCallback();
+
+        public delegate void FirstCallback(FirstParameters parameters);
 
         public class FirstSetup
         {
@@ -36,16 +41,16 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public FirstSetup Callback(Action<FirstParameters> callback)
+            public FirstSetup Callback(FirstCallback callback)
             {
-                setup.Callback(
+                setup.Callback(new InternalFirstCallback(
                     () => 
                     {
-                        var parameters = new FirstParameters
+                        var __parameters__ = new FirstParameters
                         {
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
         }
@@ -55,10 +60,21 @@ namespace Moq.Typed.Tests.Unit
             var __setup__ = mock.Setup(mock => mock.First());
             return new FirstSetup(__setup__);
         }
+
         public class SecondParameters
         {
-            public IEnumerable<int> someInts { get; init; }
+            public IEnumerable<int> someInts;
         }
+
+        private delegate void InternalSecondCallback(
+            IEnumerable<int> someInts);
+
+        private delegate int InternalSecondValueFunction(
+            IEnumerable<int> someInts);
+
+        public delegate void SecondCallback(SecondParameters parameters);
+
+        public delegate int SecondValueFunction(SecondParameters parameters);
 
         public class SecondSetup
         {
@@ -69,36 +85,31 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public SecondSetup Callback(Action<SecondParameters> callback)
+            public SecondSetup Callback(SecondCallback callback)
             {
-                setup.Callback<
-                    IEnumerable<int>>(
-                    (someInts) => 
+                setup.Callback(new InternalSecondCallback(
+                    (IEnumerable<int> someInts) => 
                     {
-                        var parameters = new SecondParameters
+                        var __parameters__ = new SecondParameters
                         {
                             someInts = someInts
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public SecondSetup Returns(int value)
-                => Returns(_ => value);
-
-            public SecondSetup Returns(Func<SecondParameters, int> valueFunction)
+            public SecondSetup Returns(SecondValueFunction valueFunction)
             {
-                setup.Returns<
-                    IEnumerable<int>>(
-                    (someInts) => 
+                setup.Returns(new InternalSecondValueFunction(
+                    (IEnumerable<int> someInts) => 
                     {
-                        var parameters = new SecondParameters
+                        var __parameters__ = new SecondParameters
                         {
-                                someInts = someInts
+                            someInts = someInts
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }
@@ -112,12 +123,20 @@ namespace Moq.Typed.Tests.Unit
                 It.Is(someIntsExpression)));
             return new SecondSetup(__setup__);
         }
+
         public class ThirdParameters
         {
-            public IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters { get; init; }
-            public Moq.Typed.Tests.Unit.Parameter oneMoreParameter { get; init; }
-            public int someInt { get; init; }
+            public IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters;
+            public Moq.Typed.Tests.Unit.Parameter oneMoreParameter;
+            public int someInt;
         }
+
+        private delegate void InternalThirdCallback(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            int someInt);
+
+        public delegate void ThirdCallback(ThirdParameters parameters);
 
         public class ThirdSetup
         {
@@ -128,20 +147,19 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public ThirdSetup Callback(Action<ThirdParameters> callback)
+            public ThirdSetup Callback(ThirdCallback callback)
             {
-                setup.Callback<
-                    IEnumerable<Moq.Typed.Tests.Unit.Parameter>, Moq.Typed.Tests.Unit.Parameter, int>(
-                    (someParameters, oneMoreParameter, someInt) => 
+                setup.Callback(new InternalThirdCallback(
+                    (IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, Moq.Typed.Tests.Unit.Parameter oneMoreParameter, int someInt) => 
                     {
-                        var parameters = new ThirdParameters
+                        var __parameters__ = new ThirdParameters
                         {
                             someParameters = someParameters
                             oneMoreParameter = oneMoreParameter
                             someInt = someInt
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
         }

@@ -8,25 +8,36 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
+
         public class FirstParameters
         {
-            public object someObject { get; init; }
+            public object someObject;
         }
+
+        private delegate void InternalFirstCallback(
+            object someObject);
+
+        private delegate int InternalFirstValueFunction(
+            object someObject);
+
+        public delegate void FirstCallback(FirstParameters parameters);
+
+        public delegate int FirstValueFunction(FirstParameters parameters);
 
         public class FirstSetup
         {
@@ -37,36 +48,31 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public FirstSetup Callback(Action<FirstParameters> callback)
+            public FirstSetup Callback(FirstCallback callback)
             {
-                setup.Callback<
-                    object>(
-                    (someObject) => 
+                setup.Callback(new InternalFirstCallback(
+                    (object someObject) => 
                     {
-                        var parameters = new FirstParameters
+                        var __parameters__ = new FirstParameters
                         {
                             someObject = someObject
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public FirstSetup Returns(int value)
-                => Returns(_ => value);
-
-            public FirstSetup Returns(Func<FirstParameters, int> valueFunction)
+            public FirstSetup Returns(FirstValueFunction valueFunction)
             {
-                setup.Returns<
-                    object>(
-                    (someObject) => 
+                setup.Returns(new InternalFirstValueFunction(
+                    (object someObject) => 
                     {
-                        var parameters = new FirstParameters
+                        var __parameters__ = new FirstParameters
                         {
-                                someObject = someObject
+                            someObject = someObject
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }

@@ -8,24 +8,33 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
         {
             this.mock = mock;
         }
+
         public class FirstParameters
         {
         }
+
+        private delegate void InternalFirstCallback();
+
+        private delegate int InternalFirstValueFunction();
+
+        public delegate void FirstCallback(FirstParameters parameters);
+
+        public delegate int FirstValueFunction(FirstParameters parameters);
 
         public class FirstSetup
         {
@@ -36,32 +45,29 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public FirstSetup Callback(Action<FirstParameters> callback)
+            public FirstSetup Callback(FirstCallback callback)
             {
-                setup.Callback(
+                setup.Callback(new InternalFirstCallback(
                     () => 
                     {
-                        var parameters = new FirstParameters
+                        var __parameters__ = new FirstParameters
                         {
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public FirstSetup Returns(int value)
-                => Returns(_ => value);
-
-            public FirstSetup Returns(Func<FirstParameters, int> valueFunction)
+            public FirstSetup Returns(FirstValueFunction valueFunction)
             {
-                setup.Returns(
+                setup.Returns(new InternalFirstValueFunction(
                     () => 
                     {
-                        var parameters = new FirstParameters
+                        var __parameters__ = new FirstParameters
                         {
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }
@@ -71,10 +77,21 @@ namespace Moq.Typed.Tests.Unit
             var __setup__ = mock.Setup(mock => mock.First());
             return new FirstSetup(__setup__);
         }
+
         public class SecondParameters
         {
-            public int genericParam { get; init; }
+            public int genericParam;
         }
+
+        private delegate void InternalSecondCallback(
+            int genericParam);
+
+        private delegate int InternalSecondValueFunction(
+            int genericParam);
+
+        public delegate void SecondCallback(SecondParameters parameters);
+
+        public delegate int SecondValueFunction(SecondParameters parameters);
 
         public class SecondSetup
         {
@@ -85,36 +102,31 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public SecondSetup Callback(Action<SecondParameters> callback)
+            public SecondSetup Callback(SecondCallback callback)
             {
-                setup.Callback<
-                    int>(
-                    (genericParam) => 
+                setup.Callback(new InternalSecondCallback(
+                    (int genericParam) => 
                     {
-                        var parameters = new SecondParameters
+                        var __parameters__ = new SecondParameters
                         {
                             genericParam = genericParam
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public SecondSetup Returns(int value)
-                => Returns(_ => value);
-
-            public SecondSetup Returns(Func<SecondParameters, int> valueFunction)
+            public SecondSetup Returns(SecondValueFunction valueFunction)
             {
-                setup.Returns<
-                    int>(
-                    (genericParam) => 
+                setup.Returns(new InternalSecondValueFunction(
+                    (int genericParam) => 
                     {
-                        var parameters = new SecondParameters
+                        var __parameters__ = new SecondParameters
                         {
-                                genericParam = genericParam
+                            genericParam = genericParam
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }

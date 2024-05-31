@@ -8,18 +8,18 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
@@ -38,9 +38,18 @@ namespace Moq.Typed.Tests.Unit
         {
             return mock.Setup(mock => mock.InitOnly);
         }
+
         public class GetterParameters1
         {
         }
+
+        private delegate void InternalGetterCallback1();
+
+        private delegate int InternalGetterValueFunction1();
+
+        public delegate void GetterCallback1(GetterParameters1 parameters);
+
+        public delegate int GetterValueFunction1(GetterParameters1 parameters);
 
         public class GetterSetup1
         {
@@ -51,32 +60,29 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public GetterSetup1 Callback(Action<GetterParameters1> callback)
+            public GetterSetup1 Callback(GetterCallback1 callback)
             {
-                setup.Callback(
+                setup.Callback(new InternalGetterCallback1(
                     () => 
                     {
-                        var parameters = new GetterParameters1
+                        var __parameters__ = new GetterParameters1
                         {
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public GetterSetup1 Returns(int value)
-                => Returns(_ => value);
-
-            public GetterSetup1 Returns(Func<GetterParameters1, int> valueFunction)
+            public GetterSetup1 Returns(GetterValueFunction1 valueFunction)
             {
-                setup.Returns(
+                setup.Returns(new InternalGetterValueFunction1(
                     () => 
                     {
-                        var parameters = new GetterParameters1
+                        var __parameters__ = new GetterParameters1
                         {
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }

@@ -8,25 +8,31 @@ using System.Linq.Expressions;
 namespace Moq.Typed.Tests.Unit
 {
     [GeneratedCode("Moq.Typed", null)]
-    internal static class TypedMockSetupExtension_ForITestable
+    internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMock_ForITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMock_ForITestable(mock);
+        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal class TypedMock_ForITestable
+    internal sealed class TypedMockFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMock_ForITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
+
         public class FirstParameters<T>
         {
-            public T someGenericParam { get; init; }
+            public T someGenericParam;
         }
+
+        private delegate void InternalFirstCallback<T>(
+            T someGenericParam);
+
+        public delegate void FirstCallback<T>(FirstParameters<T> parameters);
 
         public class FirstSetup<T>
         {
@@ -37,18 +43,17 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public FirstSetup<T> Callback(Action<FirstParameters<T>> callback)
+            public FirstSetup<T> Callback(FirstCallback<T> callback)
             {
-                setup.Callback<
-                    T>(
-                    (someGenericParam) => 
+                setup.Callback(new InternalFirstCallback<T>(
+                    (T someGenericParam) => 
                     {
-                        var parameters = new FirstParameters<T>
+                        var __parameters__ = new FirstParameters<T>
                         {
                             someGenericParam = someGenericParam
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
         }
@@ -62,11 +67,24 @@ namespace Moq.Typed.Tests.Unit
                 It.Is(someGenericParamExpression)));
             return new FirstSetup<T>(__setup__);
         }
+
         public class SecondParameters<TInput, TOutput>
         {
-            public int someInt { get; init; }
-            public TInput genericInput { get; init; }
+            public int someInt;
+            public TInput genericInput;
         }
+
+        private delegate void InternalSecondCallback<TInput, TOutput>(
+            int someInt, 
+            TInput genericInput);
+
+        private delegate TOutput InternalSecondValueFunction<TInput, TOutput>(
+            int someInt, 
+            TInput genericInput);
+
+        public delegate void SecondCallback<TInput, TOutput>(SecondParameters<TInput, TOutput> parameters);
+
+        public delegate TOutput SecondValueFunction<TInput, TOutput>(SecondParameters<TInput, TOutput> parameters);
 
         public class SecondSetup<TInput, TOutput>
         {
@@ -77,38 +95,33 @@ namespace Moq.Typed.Tests.Unit
                 this.setup = setup;
             }
 
-            public SecondSetup<TInput, TOutput> Callback(Action<SecondParameters<TInput, TOutput>> callback)
+            public SecondSetup<TInput, TOutput> Callback(SecondCallback<TInput, TOutput> callback)
             {
-                setup.Callback<
-                    int, TInput>(
-                    (someInt, genericInput) => 
+                setup.Callback(new InternalSecondCallback<TInput, TOutput>(
+                    (int someInt, TInput genericInput) => 
                     {
-                        var parameters = new SecondParameters<TInput, TOutput>
+                        var __parameters__ = new SecondParameters<TInput, TOutput>
                         {
                             someInt = someInt
                             genericInput = genericInput
                         };
-                        callback(parameters);
-                    });
+                        callback(__parameters__);
+                    }));
                 return this;
             }
 
-            public SecondSetup<TInput, TOutput> Returns(TOutput value)
-                => Returns(_ => value);
-
-            public SecondSetup<TInput, TOutput> Returns(Func<SecondParameters<TInput, TOutput>, TOutput> valueFunction)
+            public SecondSetup<TInput, TOutput> Returns(SecondValueFunction<TInput, TOutput> valueFunction)
             {
-                setup.Returns<
-                    int, TInput>(
-                    (someInt, genericInput) => 
+                setup.Returns(new InternalSecondValueFunction<TInput, TOutput>(
+                    (int someInt, TInput genericInput) => 
                     {
-                        var parameters = new SecondParameters<TInput, TOutput>
+                        var __parameters__ = new SecondParameters<TInput, TOutput>
                         {
-                                someInt = someInt
-                                genericInput = genericInput
+                            someInt = someInt
+                            genericInput = genericInput
                         };
-                        return valueFunction(parameters);
-                    });
+                        return valueFunction(__parameters__);
+                    }));
                 return this;
             }
         }
