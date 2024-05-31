@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Collections.Immutable;
 
 namespace Moq.Typed;
 
@@ -53,8 +52,5 @@ public sealed class SourceGenerator : IIncrementalGenerator
             .SelectMany((types, _) => types.Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default));
         context.RegisterSourceOutput(deduplicated, TypedMockGenerator.Run);
     }
-
-    private sealed record MockCreatingSymbols(
-        ImmutableArray<IMethodSymbol> Constructors, IMethodSymbol GetMethod);
 }
 

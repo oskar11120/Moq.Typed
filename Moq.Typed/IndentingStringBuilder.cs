@@ -3,9 +3,18 @@ using System.Text;
 
 namespace Moq.Typed;
 
+
+internal enum EmptyStringAppendBahaviour
+{
+    Ignore,
+    AppendIndentationOnly
+}
+
 internal sealed class IndentingStringBuilder
 {
     private readonly StringBuilder builder;
+    private readonly EmptyStringAppendBahaviour onEmptyString;
+
     public int IndentationLevel { get; private set; }
 
     private static void AtLeastZero(int indentationLevel)
@@ -14,21 +23,43 @@ internal sealed class IndentingStringBuilder
             throw new ArgumentException($"{nameof(indentationLevel)} lesser than 0 ({indentationLevel}).");
     }
 
-    public IndentingStringBuilder(int indentationLevel = 0)
+    public IndentingStringBuilder(int indentationLevel = 0, EmptyStringAppendBahaviour onEmptyString = EmptyStringAppendBahaviour.Ignore)
     {
         AtLeastZero(indentationLevel);
         builder = new();
         IndentationLevel = indentationLevel;
+        this.onEmptyString = onEmptyString;
     }
 
     public override string ToString()
         => builder.ToString();
 
-    public StringBuilder AppendIgnoringIndentation(string value)
-        => builder.Append(value);
-
-    public StringBuilder Append(string value)
+    public IndentingStringBuilder AppendIgnoringIndentation(string value)
     {
+        builder.Append(value);
+        return this;
+    }
+
+    public IndentingStringBuilder AppendLine()
+    {
+        builder.AppendLine();
+        return this;
+    }
+
+    public IndentingStringBuilder AppendLine(string value, int atIndentation = 0)
+    {
+        if (value.Length is 0 && onEmptyString is EmptyStringAppendBahaviour.Ignore)
+            return this;
+        builder.AppendLine();
+        return Append(value, atIndentation);
+    }
+
+    public IndentingStringBuilder Append(string value, int atIndentation = 0)
+    {
+        if (value.Length is 0 && onEmptyString is EmptyStringAppendBahaviour.Ignore)
+            return this;
+
+        using var indentation = Indent(atIndentation);
         const string newline = @"
 ";
 
@@ -53,7 +84,7 @@ internal sealed class IndentingStringBuilder
         if (IndentationLevel is 0)
         {
             builder.Append(value);
-            return builder;
+            return this;
         }
 
         var newlineIndices = GetNewlineIndices(0);
@@ -69,7 +100,7 @@ internal sealed class IndentingStringBuilder
         {
             var textStartAt = previousNewline + newline.Length;
             var textLength = nextNewline - textStartAt;
-            if(textLength is not 0)
+            if (textLength is not 0)
                 AppendIndentation();
             var slice = value.AsSpan(textStartAt, textLength);
             slice.CopyTo(buffer);
@@ -78,7 +109,7 @@ internal sealed class IndentingStringBuilder
         }
         try
         {
-            foreach (var index in newlineIndices) 
+            foreach (var index in newlineIndices)
             {
                 AppendLine(index);
                 builder.AppendLine();
@@ -91,7 +122,7 @@ internal sealed class IndentingStringBuilder
             ArrayPool<char>.Shared.Return(buffer);
         }
 
-        return builder;
+        return this;
     }
 
     public Indentiation Indent(int times = 1)
@@ -101,10 +132,10 @@ internal sealed class IndentingStringBuilder
         return new(this, times);
     }
 
-    public readonly struct Indentiation : IDisposable
+    public struct Indentiation : IDisposable
     {
         private readonly IndentingStringBuilder builder;
-        private readonly int times;
+        private int times;
 
         public Indentiation(IndentingStringBuilder builder, int times)
         {
@@ -112,6 +143,10 @@ internal sealed class IndentingStringBuilder
             this.times = times;
         }
 
-        public void Dispose() => builder.IndentationLevel -= times;
+        public void Dispose()
+        {
+            builder.IndentationLevel -= times;
+            times = 0;
+        }
     }
 }

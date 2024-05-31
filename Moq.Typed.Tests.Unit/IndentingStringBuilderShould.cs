@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace Moq.Typed.Tests.Unit;
+﻿namespace Moq.Typed.Tests.Unit;
 
 internal class IndentingStringBuilderShould
 {
@@ -34,6 +32,6 @@ internal class IndentingStringBuilderShould
                 Text
             """;
         var result = sb.ToString();
-        Assert.That(result == expecation);
+        Assert.That(result, Is.EqualTo(expecation));
     }
 }

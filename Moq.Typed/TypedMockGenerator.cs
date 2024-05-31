@@ -1,13 +1,17 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Xml.Linq;
+using System.Globalization;
 
 namespace Moq.Typed;
 
 internal static class TypedMockGenerator
 {
-    private static string Comma(int i, int length) => i < length - 1 ? "," : string.Empty;
-    private static string ParametersContainerTypeName(IMethodSymbol method) => method.Name + "Parameters";
-    private static string SetupTypeName(IMethodSymbol method) => method.Name + "Setup";
+    private static string Comma(int i, int length) => i < length - 1 ? ", " : string.Empty;
+    private static string OverloadSuffix(int number) =>
+        number is 0 ? string.Empty : number.ToString(CultureInfo.InvariantCulture);
+    private static string ParametersContainerTypeName(IMethodSymbol method, int methodOverloadNumber) =>
+        method.Name + "Parameters" + OverloadSuffix(methodOverloadNumber);
+    private static string SetupTypeName(IMethodSymbol method, int methodOverloadNumber) =>
+        method.Name + "Setup" + OverloadSuffix(methodOverloadNumber);
 
     private static bool WriteGenericTypeParameters(IMethodSymbol method, IndentingStringBuilder output)
     {
@@ -22,150 +26,154 @@ internal static class TypedMockGenerator
         return true;
     }
 
-    private static string GetGenericTypeParameters(IMethodSymbol method) 
+    private static string GetGenericTypeParameters(IMethodSymbol method)
     {
         var output = new IndentingStringBuilder();
         WriteGenericTypeParameters(method, output);
         return output.ToString();
     }
 
-    private static void WriteParametersContainerType(IMethodSymbol method, IndentingStringBuilder output)
+    private static void WriteParametersContainerType(IMethodSymbol method, int methodOverloadNumber, IndentingStringBuilder output)
     {
-        output.Append($$"""
-
-
-            public class {{ParametersContainerTypeName(method)}}
-            """);
+        output.AppendLine($"public class {ParametersContainerTypeName(method, methodOverloadNumber)}");
         WriteGenericTypeParameters(method, output);
-        output.Append("""
-  
-            {
-            """);
-
+        output.AppendLine("{");
         foreach (var parameter in method.Parameters)
-            output.Append($$"""
-
-                    public {{parameter.Type}} {{parameter.Name}} { get; init; }
-                """);
-
-        output.Append("""
-
-            }
-            """);
+            output.AppendLine($$"""public {{parameter.Type}} {{parameter.Name}} { get; init; }""", 1);
+        output.AppendLine("}");
     }
 
-    private static void WriteSetupType(IMethodSymbol forMethod, string onTypeWithName, IndentingStringBuilder output)
+    private static void WriteSetupType(IMethodSymbol forMethod, int withOverloadNumber, string onTypeWithName, IndentingStringBuilder output)
     {
-        var typeName = SetupTypeName(forMethod);
-        var containerTypeName = ParametersContainerTypeName(forMethod);
+        var typeName = SetupTypeName(forMethod, withOverloadNumber);
+        var containerTypeName = ParametersContainerTypeName(forMethod, withOverloadNumber);
         var setupTypeName = forMethod.ReturnsVoid ? $"ISetup<{onTypeWithName}>" : $"ISetup<{onTypeWithName}, {forMethod.ReturnType}>";
         var genericTypeParameters = GetGenericTypeParameters(forMethod);
         var typeNameWithGenericParameters = $"{typeName}{genericTypeParameters}";
         var containerTypeNameWithGenericParameters = $"{containerTypeName}{genericTypeParameters}";
 
-        output.Append($$"""
-
+        output.AppendLine($$"""
 
             public class {{typeNameWithGenericParameters}}
+            {
             """);
 
-        output.Append($$"""
-
-            {
-                private readonly {{setupTypeName}} setup;
+        using var indentation_insideClass = output.Indent(1);  
+        output.AppendLine($$"""
+            private readonly {{setupTypeName}} setup;
             
-                public {{typeName}} ({{setupTypeName}} setup)
-                {
-                    this.setup = setup;
-                }
+            public {{typeName}}({{setupTypeName}} setup)
+            {
+                this.setup = setup;
+            }
             """);
 
         var parameterTypesText = forMethod.Parameters.Length is 0 ?
             string.Empty :
             $"""
             <
-                        {string.Join(",", forMethod.Parameters.Select(parameter => parameter.Type.ToDisplayString()))}>
+                    {string.Join(", ", forMethod.Parameters.Select(parameter => parameter.Type.ToDisplayString()))}>
             """;
         var parameterNames = forMethod.Parameters.Select(parameter => parameter.Name);
 
-        output.Append($$"""
-  
-
-                public {{typeNameWithGenericParameters}} Callback(Action<{{containerTypeNameWithGenericParameters}}> callback)
-            """);
-        output.Append($$"""
-
-                {
-                    setup.Callback{{parameterTypesText}}(
-                        ({{string.Join(", ", parameterNames)}}) => 
+        output.AppendLine();
+        output.AppendLine($"public {typeNameWithGenericParameters} Callback(Action<{containerTypeNameWithGenericParameters}> callback)");
+        output.AppendLine($$"""
+            {
+                setup.Callback{{parameterTypesText}}(
+                    ({{string.Join(", ", parameterNames)}}) => 
+                    {
+                        var parameters = new {{containerTypeNameWithGenericParameters}}
                         {
-                            var parameters = new {{containerTypeNameWithGenericParameters}}
-                            {
             """);
         foreach (var name in parameterNames)
-            output.Append($$"""
-            
-                                    {{name}} = {{name}}
-                """);
-        output.Append($$"""
-
-                            };
-                            callback(parameters);
-                        });
-                    return this;
-                }
+            output.AppendLine($"{name} = {name}", 4);
+        output.AppendLine($$"""
+                        };
+                        callback(parameters);
+                    });
+                return this;
+            }
             """);
 
-        if (!forMethod.ReturnsVoid) 
+        if (!forMethod.ReturnsVoid)
         {
-            output.Append($$"""
-  
+            output.AppendLine($$"""
 
-                public {{typeNameWithGenericParameters}} Returns({{forMethod.ReturnType}} value)
-                    => Returns(_ => value);
+            public {{typeNameWithGenericParameters}} Returns({{forMethod.ReturnType}} value)
+                => Returns(_ => value);
             """);
 
-            output.Append($$"""
-  
+            output.AppendLine($$"""
 
-                public {{typeNameWithGenericParameters}} Returns(Func<{{containerTypeNameWithGenericParameters}}, {{forMethod.ReturnType}}> valueFunction)
+            public {{typeNameWithGenericParameters}} Returns(Func<{{containerTypeNameWithGenericParameters}}, {{forMethod.ReturnType}}> valueFunction)
             """);
-            output.Append($$"""
-
-                {
-                    setup.Returns{{parameterTypesText}}(
-                        ({{string.Join(", ", parameterNames)}}) => 
+            output.AppendLine($$"""
+            {
+                setup.Returns{{parameterTypesText}}(
+                    ({{string.Join(", ", parameterNames)}}) => 
+                    {
+                        var parameters = new {{containerTypeNameWithGenericParameters}}
                         {
-                            var parameters = new {{containerTypeNameWithGenericParameters}}
-                            {
             """);
             foreach (var name in parameterNames)
-                output.Append($$"""
-            
-                                    {{name}} = {{name}}
-                """);
-            output.Append($$"""
-
-                            };
-                            return valueFunction(parameters);
-                        });
-                    return this;
-                }
+                output.AppendLine($"{name} = {name}", 5);
+            output.AppendLine($$"""
+                        };
+                        return valueFunction(parameters);
+                    });
+                return this;
+            }
             """);
         }
 
-        output.Append("""
-            
-            }
-            """);
+        indentation_insideClass.Dispose();
+        output.AppendLine("}");
     }
 
-    private static void WriteMethod(IMethodSymbol method, IndentingStringBuilder output)
+    private static void WriteGenericTypeConstraints(IMethodSymbol method, IndentingStringBuilder output, int atIndentation)
+    {
+        using var indentation = output.Indent(atIndentation);
+        var atLeastOnce = false;
+        void Write(ITypeParameterSymbol type)
+        {
+            void Write(string contraintSuffix)
+            {
+                if (!atLeastOnce)
+                {
+                    output.AppendLine($$"""
+                        where {{type}} : {{contraintSuffix}}
+                        """);
+                    atLeastOnce = true;
+                }
+                else
+                    output.AppendIgnoringIndentation($$"""
+                    , {{contraintSuffix}}
+                    """);
+            }
+
+            if (type.HasConstructorConstraint)
+                Write("new()");
+            if (type.HasNotNullConstraint)
+                Write("notnull");
+            if (type.HasReferenceTypeConstraint)
+                Write("class");
+            if (type.HasUnmanagedTypeConstraint)
+                Write("unmanaged");
+            if (type.HasValueTypeConstraint)
+                Write("struct");
+            foreach (var constraintType in type.ConstraintTypes)
+                Write(constraintType.ToDisplayString());
+        }
+        foreach (var typeParameter in method.TypeParameters)
+            Write(typeParameter);
+    }
+
+    private static void WriteMethod(IMethodSymbol method, int methodOverloadNumber, IndentingStringBuilder output)
     {
         string typeParametersOutput = GetGenericTypeParameters(method);
-        var setupTypeNameWithGenericParameters = SetupTypeName(method) + typeParametersOutput;
-        output.Append($"""
-
+        var setupTypeNameWithGenericParameters = SetupTypeName(method, methodOverloadNumber) + typeParametersOutput;
+        output.AppendLine($"""
 
             public {setupTypeNameWithGenericParameters} {method.Name}
             """);
@@ -173,49 +181,63 @@ internal static class TypedMockGenerator
         if (typeParametersOutput.Length != 0)
             output.AppendIgnoringIndentation(typeParametersOutput);
 
-        static string Predicate(IParameterSymbol parameter) => $"Func<{parameter.Type},bool>";
+        static string Predicate(IParameterSymbol parameter) => $"Func<{parameter.Type}, bool>";
         var methodParameters = method.Parameters;
         output.AppendIgnoringIndentation("(");
         for (int i = 0; i < methodParameters.Length; i++)
         {
             var parameter = methodParameters[i];
-            output.Append($$"""
-
-                    {{Predicate(parameter)}}? {{parameter.Name}} = null{{Comma(i, methodParameters.Length)}}
-                """);
-        }
-
-        output.AppendIgnoringIndentation(")");
-        output.Append("""
-            
+            var text = parameter.RefKind switch
             {
-            """);
-        foreach (var parameter in methodParameters)
-            output.Append($"""
-                
-                {parameter.Name} ??= static _ => true;
-                Expression<{Predicate(parameter)}> {parameter.Name}Expression = argument => {parameter.Name}(argument);
-            """);
+                RefKind.None => $"{Predicate(parameter)}? {parameter.Name} = null{Comma(i, methodParameters.Length)}",
+                RefKind.Out => $"{parameter.Type} {parameter.Name} = default({parameter.Type})!",
+                _ => string.Empty
+            };
+            output.AppendLine(text, 1);
+        }
+        output.AppendIgnoringIndentation(")");
 
-        output.Append($"""
-                
-                var __setup__ = mock.Setup(mock => mock.{method.Name}{typeParametersOutput}(
-            """);
+        WriteGenericTypeConstraints(method, output, atIndentation: 1);
+        output.AppendLine("{");
+        using var indentation_insideMethod = output.Indent(1);
+        foreach (var parameter in methodParameters)
+            if(parameter.RefKind is RefKind.None)
+                output.AppendLine($"""
+                    {parameter.Name} ??= static _ => true;
+                    Expression<{Predicate(parameter)}> {parameter.Name}Expression = argument => {parameter.Name}(argument);
+                    """);
+
+        output.AppendLine($"var __setup__ = mock.Setup(mock => mock.{method.Name}{typeParametersOutput}(");
+        using var indentation_insideSetupDelegate = output.Indent(1);
         for (int i = 0; i < methodParameters.Length; i++)
         {
             var parameter = methodParameters[i];
-            output.Append($"""
-                
-                    It.Is({parameter.Name}Expression){Comma(i, methodParameters.Length)}
-            """);
+            var text = parameter.RefKind switch
+            {
+                RefKind.None => $"It.Is({parameter.Name}Expression)",
+                RefKind.Out => $"out {parameter.Name}",
+                RefKind.Ref or RefKind.RefReadOnlyParameter or RefKind.In => $"ref It.Ref<{parameter.Type}>.IsAny",
+                _ => $"It.IsAny<{parameter.Type}>()"
+            };
+            output.AppendLine(text);
+            output.AppendIgnoringIndentation(Comma(i, methodParameters.Length));
         }
         output.AppendIgnoringIndentation("));");
-        output.Append($$"""
-            
-                return new {{setupTypeNameWithGenericParameters}}(__setup__);
+        indentation_insideSetupDelegate.Dispose();
+        output.AppendLine($"return new {setupTypeNameWithGenericParameters}(__setup__);");
+
+        indentation_insideMethod.Dispose();
+        output.AppendLine("}");
+    }
+
+    private static void WriteProperty(IPropertySymbol property, string onTypeWithName, int overloadNumber, IndentingStringBuilder output)
+        => output.AppendLine($$"""
+
+            public ISetup<{{onTypeWithName}}, {{property.Type}}> {{property.Name}}{{OverloadSuffix(overloadNumber)}}()
+            {
+                return mock.Setup(mock => mock.{{property.Name}});
             }
             """);
-    }
 
     public static void Run(SourceProductionContext context, INamedTypeSymbol forType)
     {
@@ -254,36 +276,58 @@ internal static class TypedMockGenerator
             """;
         output.Append(classesSource);
 
-        var mockableMethods = forType
+        var mockableMembers = forType
             .GetMembers()
             .Where(member =>
                 (member.IsAbstract || member.IsVirtual)
                 && member.DeclaredAccessibility is not Accessibility.Private
-                && member is not IMethodSymbol { MethodKind: MethodKind.PropertyGet or MethodKind.PropertySet })
-            .Cast<IMethodSymbol>();
+                && member is not IMethodSymbol { MethodKind: MethodKind.PropertyGet or MethodKind.PropertySet });
 
-        try
+        var overloadCounts = new OverloadCounter();
+        using var indentation = output.Indent(2);
+        foreach (var member in mockableMembers)
         {
-            using var indentation = output.Indent(2);
-            foreach (var method in mockableMethods)
+            if (member is IMethodSymbol method)
             {
-                WriteParametersContainerType(method, output);
-                WriteSetupType(method, typeName, output);
-                WriteMethod(method, output);
+                var overloadNumber = overloadCounts.Add(method.Name);
+                WriteParametersContainerType(method, overloadNumber, output);
+                WriteSetupType(method, overloadNumber, typeName, output);
+                WriteMethod(method, overloadNumber, output);
             }
-            indentation.Dispose();
-        }
-        catch (Exception e)
-        {
-            throw;
-        }
+            else if (member is IPropertySymbol property)
+            {
+                var overloadNumber = overloadCounts.Add(property.Name);
+                WriteProperty(property, typeName, overloadNumber, output);
+            }
+            else
+                throw new NotSupportedException($"Unsupported member {member}.");
 
-        output.Append("""
+        }
+        indentation.Dispose();
 
+        output.AppendLine("""
                 }
             }
 
             """);
         context.AddSource($"{@namespace}.{forType.Name}", output.ToString());
+    }
+
+    private readonly struct OverloadCounter
+    {
+        private readonly Dictionary<string, int> state = new();
+
+        public OverloadCounter()
+        {
+        }
+
+        public int Add(string methodOrPropertyName)
+        {
+            var name = methodOrPropertyName;
+            var current = state.TryGetValue(name, out var value) ? value : -1;
+            var @new = current + 1;
+            state[name] = @new;
+            return @new;
+        }
     }
 }
