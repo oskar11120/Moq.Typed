@@ -48,7 +48,10 @@ public sealed class SourceGenerator : IIncrementalGenerator
                     _ => throw new NotSupportedException()
                 })
             .Where(type => type is not null);
-        context.RegisterSourceOutput(mockedTypes, TypedMockGenerator.Run!);
+        var deduplicated = mockedTypes
+            .Collect()
+            .SelectMany((types, _) => types.Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default));
+        context.RegisterSourceOutput(deduplicated, TypedMockGenerator.Run);
     }
 
     private sealed record MockCreatingSymbols(

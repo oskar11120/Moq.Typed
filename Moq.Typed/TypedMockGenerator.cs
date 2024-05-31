@@ -80,18 +80,23 @@ internal static class TypedMockGenerator
                 }
             """);
 
+        var parameterTypesText = forMethod.Parameters.Length is 0 ?
+            string.Empty :
+            $"""
+            <
+                        {string.Join(",", forMethod.Parameters.Select(parameter => parameter.Type.ToDisplayString()))}>
+            """;
+        var parameterNames = forMethod.Parameters.Select(parameter => parameter.Name);
+
         output.Append($$"""
   
 
                 public {{typeNameWithGenericParameters}} Callback(Action<{{containerTypeNameWithGenericParameters}}> callback)
             """);
-        var parameterTypesText = string.Join(",", forMethod.Parameters.Select(parameter => parameter.Type.ToDisplayString()));
-        var parameterNames = forMethod.Parameters.Select(parameter => parameter.Name);
         output.Append($$"""
 
                 {
-                    setup.Callback<
-                        {{parameterTypesText}}>(
+                    setup.Callback{{parameterTypesText}}(
                         ({{string.Join(", ", parameterNames)}}) => 
                         {
                             var parameters = new {{containerTypeNameWithGenericParameters}}
@@ -109,6 +114,48 @@ internal static class TypedMockGenerator
                         });
                     return this;
                 }
+            """);
+
+        if (!forMethod.ReturnsVoid) 
+        {
+            output.Append($$"""
+  
+
+                public {{typeNameWithGenericParameters}} Returns({{forMethod.ReturnType}} value)
+                    => Returns(_ => value);
+            """);
+
+            output.Append($$"""
+  
+
+                public {{typeNameWithGenericParameters}} Returns(Func<{{containerTypeNameWithGenericParameters}}, {{forMethod.ReturnType}}> valueFunction)
+            """);
+            output.Append($$"""
+
+                {
+                    setup.Returns{{parameterTypesText}}(
+                        ({{string.Join(", ", parameterNames)}}) => 
+                        {
+                            var parameters = new {{containerTypeNameWithGenericParameters}}
+                            {
+            """);
+            foreach (var name in parameterNames)
+                output.Append($$"""
+            
+                                    {{name}} = {{name}}
+                """);
+            output.Append($$"""
+
+                            };
+                            return valueFunction(parameters);
+                        });
+                    return this;
+                }
+            """);
+        }
+
+        output.Append("""
+            
             }
             """);
     }

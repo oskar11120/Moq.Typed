@@ -18,12 +18,15 @@ public class Tests2
         third
             .Setup()
             .Count<int>(items => items.Any())
-            .Callback(parameters => { });
+            .Callback(parameters => { })
+            .Returns(parameters => 5);
+        var fourth = new Mock<IMockable2>();
+        var result = third.Object.Count(new int[] { 1 });
     }
 
     public interface IMockable0
     {
-        public void Method0(int phoneNumber);
+        public int Method0(int phoneNumber);
     }
 
     public interface IMockable1

@@ -13,8 +13,6 @@ public class Tests
     [Test]
     public void Test1()
     {
-        var mock = new Mock<object>().GetType().GetGenericTypeDefinition().FullName;
-
         var source = @"
 using Moq;
 
@@ -26,6 +24,7 @@ public class Tests2
     public void Test1()
     {
         var first = new Mock<IMockable0>();
+        var third = new Mock<IMockable0>();
         var second = Mock.Get(Mock.Of<IMockable1>());
     }
 
