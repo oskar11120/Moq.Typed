@@ -25,6 +25,9 @@ public class GeneratedCodeShouldSupport
             });
         var number = 1;
         Assert.That(mock.Object.Execute(ref number), Is.EqualTo(2));
+        mock
+            .Verifyy()
+            .Execute();
     }
 
     public interface IWithIn
@@ -55,6 +58,9 @@ public class GeneratedCodeShouldSupport
             Assert.That(mock.Object.Execute(1), Is.EqualTo(2));
             Assert.That(wasCallbackCalled, Is.True);
         });
+        mock
+            .Verifyy()
+            .Execute(Times.Once());
     }
 
     public interface IWithOut
@@ -76,6 +82,9 @@ public class GeneratedCodeShouldSupport
             Assert.That(mock.Object.Execute(out number), Is.True);
             Assert.That(number, Is.EqualTo(3));
         });
+        mock
+            .Verifyy()
+            .Execute(times: Times.Once());
     }
 
     public interface IWithProperty
@@ -92,6 +101,9 @@ public class GeneratedCodeShouldSupport
             .Number()
             .Returns(1);
         Assert.That(mock.Object.Number, Is.EqualTo(1));
+        mock
+            .Verifyy()
+            .Number(Times.Once());
     }
 
     [Test]
@@ -111,21 +123,25 @@ public class GeneratedCodeShouldSupport
     public void GenericParameters()
     {
         var mock = Mock.Get(Mock.Of<IWithGeneric>());
-        var secondCalled = false;
+        var called = false;
         mock
             .Setup()
             .Execute<int>(items => items.Any())
             .Callback(parameters =>
             {
-                secondCalled = true;
+                called = true;
                 Assert.That(parameters.items.Single(), Is.EqualTo(1));
             })
             .Returns(parameters => 5);
-        var secondResult = mock.Object.Execute(new int[] { 1 });
+        var ints = new int[] { 1 };
+        var result = mock.Object.Execute(ints);
         Assert.Multiple(() =>
         {
-            Assert.That(secondCalled, Is.EqualTo(true));
-            Assert.That(secondResult, Is.EqualTo(5));
+            Assert.That(called, Is.EqualTo(true));
+            Assert.That(result, Is.EqualTo(5));
         });
+        mock
+            .Verifyy()
+            .Execute<int>(paramInts => paramInts == ints);
     }
 }

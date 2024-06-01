@@ -36,10 +36,12 @@ internal static partial class TypedMockGenerator
             string name,
             TypeInfo type,
             bool needsSetupType = true,
+            string? extensionName = default,
             MethodParameter additionalMethodPropertyMockingParameter = default)
         {
             Name = name;
             Type = type;
+            ExtensionName = extensionName ?? name;
             HasSetupVerifyType = needsSetupType;
             TypeName = $"TypedMock{name}For_{type.ShortName}";
             AdditionalMethodPropertyMockingParameter = additionalMethodPropertyMockingParameter;
@@ -47,6 +49,7 @@ internal static partial class TypedMockGenerator
 
         public readonly string Name;
         public readonly TypeInfo Type;
+        public readonly string ExtensionName;
         public readonly MethodParameter AdditionalMethodPropertyMockingParameter;
         public readonly bool HasSetupVerifyType;
         public readonly string TypeName;

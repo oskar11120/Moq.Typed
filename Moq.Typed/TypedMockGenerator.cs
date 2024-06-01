@@ -254,7 +254,7 @@ internal static partial class TypedMockGenerator
             {{GeneratedCodeAttribute}}
             internal static class TypedMock{{feature.Name}}ExtensionFor_{{type.ShortName}}
             {
-                public static {{feature.TypeName}} {{feature.Name}}(this {{type.MockName}} mock)
+                public static {{feature.TypeName}} {{feature.ExtensionName}}(this {{type.MockName}} mock)
                     => new {{feature.TypeName}}(mock);
             }
             """);
@@ -344,6 +344,7 @@ internal static partial class TypedMockGenerator
             "Verify",
             type,
             needsSetupType: false,
+            extensionName: "Verifyy",
             additionalMethodPropertyMockingParameter: new("Times", "times"));
         WriteFeature(verify, output);
 
