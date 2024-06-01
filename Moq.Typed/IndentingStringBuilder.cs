@@ -96,7 +96,6 @@ internal sealed class IndentingStringBuilder : IDisposable
         }
 
         var previousNewline = 0 - newline.Length;
-        var buffer = ArrayPool<char>.Shared.Rent(256);
         void AppendLine(int nextNewline)
         {
             var textStartAt = previousNewline + newline.Length;
