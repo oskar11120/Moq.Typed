@@ -5,7 +5,7 @@ internal class IndentingStringBuilderShould
     [Test]
     public void Work()
     {
-        var sb = new IndentingStringBuilder();
+        using var sb = new IndentingStringBuilder();
         sb.Append("""
             Text
                 Text

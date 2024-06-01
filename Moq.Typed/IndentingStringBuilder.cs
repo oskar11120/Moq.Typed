@@ -9,10 +9,11 @@ internal enum EmptyStringAppendBahaviour
     AppendIndentationOnly
 }
 
-internal sealed class IndentingStringBuilder
+internal sealed class IndentingStringBuilder : IDisposable
 {
     private readonly StringBuilder builder;
     private readonly EmptyStringAppendBahaviour onEmptyString;
+    private readonly char[] buffer;
 
     public int IndentationLevel { get; private set; }
 
@@ -22,12 +23,13 @@ internal sealed class IndentingStringBuilder
             throw new ArgumentException($"{nameof(indentationLevel)} lesser than 0 ({indentationLevel}).");
     }
 
-    public IndentingStringBuilder(int indentationLevel = 0, EmptyStringAppendBahaviour onEmptyString = EmptyStringAppendBahaviour.Ignore)
+    public IndentingStringBuilder(int indentationLevel = 0, EmptyStringAppendBahaviour onEmptyString = EmptyStringAppendBahaviour.Ignore, int bufferSize = 512)
     {
         AtLeastZero(indentationLevel);
         builder = new();
         IndentationLevel = indentationLevel;
         this.onEmptyString = onEmptyString;
+        buffer = ArrayPool<char>.Shared.Rent(bufferSize);
     }
 
     public override string ToString()
@@ -106,20 +108,14 @@ internal sealed class IndentingStringBuilder
             builder.Append(buffer, 0, textLength);
             previousNewline = nextNewline;
         }
-        try
+
+        foreach (var index in newlineIndices)
         {
-            foreach (var index in newlineIndices)
-            {
-                AppendLine(index);
-                builder.AppendLine();
-            }
-            if (previousNewline != value.Length - 1)
-                AppendLine(value.Length);
+            AppendLine(index);
+            builder.AppendLine();
         }
-        finally
-        {
-            ArrayPool<char>.Shared.Return(buffer);
-        }
+        if (previousNewline != value.Length - 1)
+            AppendLine(value.Length);
 
         return this;
     }
@@ -130,6 +126,8 @@ internal sealed class IndentingStringBuilder
         IndentationLevel += times;
         return new(this, times);
     }
+
+    public void Dispose() => ArrayPool<char>.Shared.Return(buffer);
 
     public struct Indentiation : IDisposable
     {

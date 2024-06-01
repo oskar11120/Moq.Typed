@@ -323,7 +323,7 @@ internal static partial class TypedMockGenerator
 
     public static void Run(SourceProductionContext context, INamedTypeSymbol forType)
     {
-        var output = new IndentingStringBuilder();
+        using var output = new IndentingStringBuilder();
         var @namespace = forType.ContainingNamespace.ToDisplayString();
         output.Append($$"""
             using Moq;
