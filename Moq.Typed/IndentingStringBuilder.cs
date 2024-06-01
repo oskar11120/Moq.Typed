@@ -3,7 +3,6 @@ using System.Text;
 
 namespace Moq.Typed;
 
-
 internal enum EmptyStringAppendBahaviour
 {
     Ignore,
