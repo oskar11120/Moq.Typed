@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.CodeDom.Compiler;
 using System.Globalization;
+using System.Reflection.Metadata;
 
 namespace Moq.Typed;
 
@@ -180,8 +181,14 @@ internal static partial class TypedMockGenerator
                 _ => string.Empty
             },
             true,
-            1,
-            additionallyWrite: feature.AdditionalMethodPropertyMockingParameter.Text);
+            1);
+        var anyWritten = symbol.Parameters.Any(parameter => parameter.RefKind is RefKind.None or RefKind.Out);
+        if (feature.AdditionalMethodPropertyMockingParameter.Text is string additionalParamText)
+        {
+            if (anyWritten)
+                output.AppendIgnoringIndentation(",");
+            output.AppendLine(additionalParamText, 1);
+        }
         output.AppendIgnoringIndentation(")");
 
         WriteGenericTypeConstraints(symbol, atIndentation: 1, output);
@@ -230,11 +237,12 @@ internal static partial class TypedMockGenerator
         var passParameter = feature.AdditionalMethodPropertyMockingParameter;
         var parameter = passParameter.Name is null ? null : $", {passParameter.Name}";
         var returnType = feature.HasSetupVerifyType ? $"I{feature.Name}<{feature.Type.Name}, {symbol.Type}>" : "void";
+        var @return = feature.HasSetupVerifyType ? "return " : null;
         output.AppendLine($$"""
 
             public {{returnType}} {{symbol.Name}}{{property.OverloadSuffix}}({{passParameter.Text}})
             {
-                return mock.{{feature.Name}}(mock => mock.{{symbol.Name}}{{parameter}});
+                {{@return}}mock.{{feature.Name}}(mock => mock.{{symbol.Name}}{{parameter}});
             }
             """);
     }
@@ -285,9 +293,11 @@ internal static partial class TypedMockGenerator
                 var overloadNumber = overloadCounts.Add(methodSymbol.Name);
                 var method = new MethodWritingContext(methodSymbol, OverloadSuffix(overloadNumber), feature, output);
                 WriteParametersContainerType(method);
-                WriteDelegates(method);
                 if (feature.HasSetupVerifyType)
+                {
+                    WriteDelegates(method);
                     WriteSetupType(method);
+                }
                 WriteMethod(method, feature);
             }
             else if (member is IPropertySymbol propertySymbol)
@@ -335,7 +345,7 @@ internal static partial class TypedMockGenerator
             type,
             needsSetupType: false,
             additionalMethodPropertyMockingParameter: new("Times", "times"));
-        //WriteFeature(verify, output);
+        WriteFeature(verify, output);
 
         namespaceIndentation.Dispose();
         output.AppendLine("""

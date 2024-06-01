@@ -120,7 +120,7 @@ internal static partial class TypedMockGenerator
         }
 
         public delegate string GetText(IParameterSymbol symbol, string? @refPrefix);
-        public void ForEachParameterWrite(GetText getText, bool comaDelimit, int atIndentation = 0, string? additionallyWrite = null)
+        public void ForEachParameterWrite(GetText getText, bool comaDelimit, int atIndentation = 0)
         {
             var parameters = Symbol.Parameters;
             using var indentation = Output.Indent(atIndentation);
@@ -132,13 +132,6 @@ internal static partial class TypedMockGenerator
                 Output.AppendLine(text);
                 if (comaDelimit)
                     Output.AppendIgnoringIndentation(Comma(i, parameters.Length));
-            }
-
-            if (additionallyWrite is not null)
-            {
-                if (comaDelimit)
-                    Output.AppendIgnoringIndentation(comma);
-                Output.AppendLine(additionallyWrite);
             }
         }
 
