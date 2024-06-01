@@ -1,27 +1,30 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Data.Common;
 using System.Globalization;
+using System.Reflection.Metadata;
 using System.Text;
 
 namespace Moq.Typed;
 
 internal static class TypedMockGenerator
 {
-    private static string? Ref(IParameterSymbol parameter) => IsRef(parameter) ? " ref" : null;
-
-    private static void WriteParametersContainerType(Method method, IndentingStringBuilder output)
+    private static void WriteParametersContainerType(MethodWritingContext method)
     {
+        var output = method.Output;
         output.AppendLine();
         output.AppendLine($"public {(method.AnyRefs ? $"ref struct" : "class")} {method.ParametersContainingType}");
         output.AppendLine("{");
-
-        foreach (var parameter in method.Symbol.Parameters)
-            output.AppendLine($"public{Ref(parameter)} {parameter.Type} {parameter.Name};", 1);
+        method.ForEachParameterWrite(
+            static (parameter, @ref) => $"public{@ref} {parameter.Type} {parameter.Name};",
+            false,
+            1);
         output.AppendLine("}");
     }
 
-    private static void WriteSetupType(Method method, IndentingStringBuilder output)
+    private static void WriteSetupType(MethodWritingContext method)
     {
         var symbol = method.Symbol;
+        var output = method.Output;
         var setupMoqInterface = symbol.ReturnsVoid ?
             $"ISetup<{method.ContainingType}>" :
             $"ISetup<{method.ContainingType}, {symbol.ReturnType}>";
@@ -48,7 +51,7 @@ internal static class TypedMockGenerator
         var paramterTexts = symbol.Parameters.Select(parameter => parameter.RefKind is RefKind.Out ?
             $"{parameter.Type} {parameter.Name}" : $"{parameter.ToDisplayString()}");
 
-        void WriteMethod(Method.Delegates delegates)
+        void WriteMethod(MethodWritingContext.Delegates delegates)
         {
             var (name, parameterName) = delegates.Return ? ("Returns", "valueFunction") : ("Callback", "callback");
             output.AppendLine();
@@ -62,8 +65,10 @@ internal static class TypedMockGenerator
                         {
             """);
 
-            foreach (var parameter in method.Symbol.Parameters)
-                output.AppendLine($"{parameter.Name} ={Ref(parameter)} {parameter.Name}", 4);
+            method.ForEachParameterWrite(
+                static (parameter, @ref) => $"{parameter.Name} ={@ref} {parameter.Name}", 
+                true, 
+                4);
 
             var @ref = method.AnyRefs ? "ref " : null;
             output.AppendLine($$"""
@@ -91,25 +96,23 @@ internal static class TypedMockGenerator
         output.AppendLine("}");
     }
 
-    private static void WriteDelegates(Method method, IndentingStringBuilder output)
+    private static void WriteDelegates(MethodWritingContext method)
     {
-        void WriteInternal(Method.Delegates delegates)
+        var output = method.Output;
+        void WriteInternal(MethodWritingContext.Delegates delegates)
         {
             var symbol = delegates.OfMethod;
             output.AppendLine();
             output.AppendLine($"private delegate {delegates.ReturnType} {delegates.InternalType}(");
-            for (int i = 0; i < symbol.Parameters.Length; i++)
-            {
-                var parameter = symbol.Parameters[i];
-                var paramterText = parameter.RefKind is RefKind.Out ? $"{parameter.Type} {parameter.Name}" : parameter.ToDisplayString();
-                output.AppendLine($"{paramterText}", 1);
-                output.AppendIgnoringIndentation(Comma(i, symbol.Parameters.Length));
-            }
+            method.ForEachParameterWrite(
+                (parameter, _) => parameter.RefKind is RefKind.Out ? $"{parameter.Type} {parameter.Name}" : parameter.ToDisplayString(),
+                true,
+                1);
             output.AppendIgnoringIndentation(");");
         }
 
         var @ref = method.AnyRefs ? "ref " : null;
-        void WritePublic(Method.Delegates delegates)
+        void WritePublic(MethodWritingContext.Delegates delegates)
         {
             output.AppendLine();
             output.AppendLine(
@@ -159,55 +162,52 @@ internal static class TypedMockGenerator
             Write(typeParameter);
     }
 
-    private static void WriteMethod(Method method, IndentingStringBuilder output)
+    private static void WriteMethod(MethodWritingContext method)
     {
         var symbol = method.Symbol;
+        var output = method.Output;
         output.AppendLine($"""
 
             public {method.SetupType} {method.Name}
             """);
 
-        static string Predicate(IParameterSymbol parameter) => $"Func<{parameter.Type}, bool>";
         var methodParameters = symbol.Parameters;
         output.AppendIgnoringIndentation("(");
-        for (int i = 0; i < methodParameters.Length; i++)
-        {
-            var parameter = methodParameters[i];
-            var text = parameter.RefKind switch
+        static string Predicate(IParameterSymbol parameter) => $"Func<{parameter.Type}, bool>";
+        method.ForEachParameterWrite(
+            static (parameter, _) => parameter.RefKind switch
             {
-                RefKind.None => $"{Predicate(parameter)}? {parameter.Name} = null{Comma(i, methodParameters.Length)}",
-                RefKind.Out => $"{parameter.Type} {parameter.Name} = default({parameter.Type})!{Comma(i, methodParameters.Length)}",
+                RefKind.None => $"{Predicate(parameter)}? {parameter.Name} = null",
+                RefKind.Out => $"{parameter.Type} {parameter.Name} = default({parameter.Type})!",
                 _ => string.Empty
-            };
-            output.AppendLine(text, 1);
-        }
+            },
+            true,
+            1);
         output.AppendIgnoringIndentation(")");
 
         WriteGenericTypeConstraints(symbol, atIndentation: 1, output);
         output.AppendLine("{");
         using var indentation_insideMethod = output.Indent(1);
-        foreach (var parameter in methodParameters)
-            if (parameter.RefKind is RefKind.None)
-                output.AppendLine($"""
-                    {parameter.Name} ??= static _ => true;
-                    Expression<{Predicate(parameter)}> {parameter.Name}Expression = argument => {parameter.Name}(argument);
-                    """);
+        method.ForEachParameterWrite(
+            static (parameter, method) => parameter.RefKind is RefKind.None ?
+                $"""
+                {parameter.Name} ??= static _ => true;
+                Expression<{Predicate(parameter)}> {parameter.Name}Expression = argument => {parameter.Name}(argument);
+                """ :
+                string.Empty,
+            false);
 
         output.AppendLine($"var __setup__ = mock.Setup(mock => mock.{method.Name}(");
         using var indentation_insideSetupDelegate = output.Indent(1);
-        for (int i = 0; i < methodParameters.Length; i++)
-        {
-            var parameter = methodParameters[i];
-            var text = parameter.RefKind switch
+        method.ForEachParameterWrite(
+            static (parameter, method) => parameter.RefKind switch
             {
                 RefKind.None => $"It.Is({parameter.Name}Expression)",
                 RefKind.Out => $"out {parameter.Name}",
                 RefKind.Ref or RefKind.RefReadOnlyParameter or RefKind.In => $"ref It.Ref<{parameter.Type}>.IsAny",
                 _ => $"It.IsAny<{parameter.Type}>()"
-            };
-            output.AppendLine(text);
-            output.AppendIgnoringIndentation(Comma(i, methodParameters.Length));
-        }
+            },
+            true);
         output.AppendIgnoringIndentation("));");
         indentation_insideSetupDelegate.Dispose();
         output.AppendLine($"return new {method.SetupType}(__setup__);");
@@ -282,11 +282,11 @@ internal static class TypedMockGenerator
             if (member is IMethodSymbol methodSymbol)
             {
                 var overloadNumber = overloadCounts.Add(methodSymbol.Name);
-                var method = new Method(methodSymbol, OverloadSuffix(overloadNumber), typeName);
-                WriteParametersContainerType(method, output);
-                WriteDelegates(method, output);
-                WriteSetupType(method, output);
-                WriteMethod(method, output);
+                var method = new MethodWritingContext(methodSymbol, OverloadSuffix(overloadNumber), typeName, output);
+                WriteParametersContainerType(method);
+                WriteDelegates(method);
+                WriteSetupType(method);
+                WriteMethod(method);
             }
             else if (member is IPropertySymbol property)
             {
@@ -311,7 +311,7 @@ internal static class TypedMockGenerator
     private static bool IsRef(IParameterSymbol parameter) => parameter.RefKind is RefKind.Ref;
     private static string Comma(int i, int length) => i < length - 1 ? ", " : string.Empty;
 
-    private readonly struct Method
+    private readonly struct MethodWritingContext
     {
         public readonly record struct Delegates(string PublicType, bool Return, IMethodSymbol OfMethod)
         {
@@ -321,11 +321,13 @@ internal static class TypedMockGenerator
 
         public readonly IMethodSymbol Symbol;
         public readonly string ContainingType;
+        public readonly IndentingStringBuilder Output;
 
-        public Method(IMethodSymbol symbol, string overloadSuffix, string containingTypeName)
+        public MethodWritingContext(IMethodSymbol symbol, string overloadSuffix, string containingTypeName, IndentingStringBuilder output)
         {
             Symbol = symbol;
             ContainingType = containingTypeName;
+            Output = output;
 
             this.overloadSuffix = overloadSuffix;
             genericTypeParameters = GetGenericTypeParameters();
@@ -355,6 +357,21 @@ internal static class TypedMockGenerator
             action(CallbackDelegates);
             if (!Symbol.ReturnsVoid)
                 action(ValueFunctionDelegates);
+        }
+
+        public delegate string GetText(IParameterSymbol symbol, string? @refPrefix);
+        public void ForEachParameterWrite(GetText getText, bool comaDelimit, int atIndentation = 0)
+        {
+            var parameters = Symbol.Parameters;
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                var parameter = parameters[i];
+                var @ref = IsRef(parameter) ? " ref" : null;
+                var text = getText(parameter, @ref);
+                Output.AppendLine(text, atIndentation);
+                if (comaDelimit)
+                    Output.AppendIgnoringIndentation(Comma(i, parameters.Length));
+            }
         }
 
         private Delegates GetDelegates(string kind, string genericTypeParameters, bool @return) =>

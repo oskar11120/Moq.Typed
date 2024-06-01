@@ -154,8 +154,8 @@ namespace Moq.Typed.Tests.Unit
                     {
                         var __parameters__ = new ThirdParameters
                         {
-                            someParameters = someParameters
-                            oneMoreParameter = oneMoreParameter
+                            someParameters = someParameters, 
+                            oneMoreParameter = oneMoreParameter, 
                             someInt = someInt
                         };
                         callback(__parameters__);

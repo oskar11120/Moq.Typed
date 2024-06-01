@@ -102,7 +102,7 @@ namespace Moq.Typed.Tests.Unit
                     {
                         var __parameters__ = new SecondParameters<TInput, TOutput>
                         {
-                            someInt = someInt
+                            someInt = someInt, 
                             genericInput = genericInput
                         };
                         callback(__parameters__);
@@ -117,7 +117,7 @@ namespace Moq.Typed.Tests.Unit
                     {
                         var __parameters__ = new SecondParameters<TInput, TOutput>
                         {
-                            someInt = someInt
+                            someInt = someInt, 
                             genericInput = genericInput
                         };
                         return valueFunction(__parameters__);
