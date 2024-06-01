@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.CodeDom.Compiler;
 using System.Globalization;
 
 namespace Moq.Typed;
@@ -28,7 +29,7 @@ internal static partial class TypedMockGenerator
 
         output.AppendLine($$"""
 
-            public class {{method.SetupType}}
+            public class {{method.SetupVerifyType}}
             {
             """);
 
@@ -36,7 +37,7 @@ internal static partial class TypedMockGenerator
         output.AppendLine($$"""
             private readonly {{setupMoqInterface}} setup;
             
-            public {{method.SetupTypeConstructorName}}({{setupMoqInterface}} setup)
+            public {{method.SetupVerifyTypeConstructorName}}({{setupMoqInterface}} setup)
             {
                 this.setup = setup;
             }
@@ -52,7 +53,7 @@ internal static partial class TypedMockGenerator
         {
             var (name, parameterName) = delegates.Return ? ("Returns", "valueFunction") : ("Callback", "callback");
             output.AppendLine();
-            output.AppendLine($"public {method.SetupType} {name}({delegates.PublicType} {parameterName})");
+            output.AppendLine($"public {method.SetupVerifyType} {name}({delegates.PublicType} {parameterName})");
             output.AppendLine($$"""
             {
                 setup.{{name}}(new {{delegates.InternalType}}(
@@ -63,8 +64,8 @@ internal static partial class TypedMockGenerator
             """);
 
             method.ForEachParameterWrite(
-                static (parameter, @ref) => $"{parameter.Name} ={@ref} {parameter.Name}", 
-                true, 
+                static (parameter, @ref) => $"{parameter.Name} ={@ref} {parameter.Name}",
+                true,
                 4);
 
             var @ref = method.AnyRefs ? "ref " : null;
@@ -159,13 +160,13 @@ internal static partial class TypedMockGenerator
             Write(typeParameter);
     }
 
-    private static void WriteMethod(MethodWritingContext method)
+    private static void WriteMethod(MethodWritingContext method, FeatureWritingContext feature)
     {
         var symbol = method.Symbol;
         var output = method.Output;
         output.AppendLine($"""
 
-            public {method.SetupType} {method.Name}
+            public {method.SetupVerifyType} {method.Name}
             """);
 
         var methodParameters = symbol.Parameters;
@@ -179,7 +180,8 @@ internal static partial class TypedMockGenerator
                 _ => string.Empty
             },
             true,
-            1);
+            1,
+            additionallyWrite: feature.AdditionalMethodPropertyMockingParameter.Text);
         output.AppendIgnoringIndentation(")");
 
         WriteGenericTypeConstraints(symbol, atIndentation: 1, output);
@@ -194,7 +196,8 @@ internal static partial class TypedMockGenerator
                 string.Empty,
             false);
 
-        output.AppendLine($"var __setup__ = mock.Setup(mock => mock.{method.Name}(");
+        var local = feature.HasSetupVerifyType ? "var __local__ = " : null;
+        output.AppendLine($"{local}mock.{feature.Name}(mock => mock.{method.Name}(");
         using var indentation_insideSetupDelegate = output.Indent(1);
         method.ForEachParameterWrite(
             static (parameter, method) => parameter.RefKind switch
@@ -205,39 +208,109 @@ internal static partial class TypedMockGenerator
                 _ => $"It.IsAny<{parameter.Type}>()"
             },
             true);
-        output.AppendIgnoringIndentation("));");
+        output.AppendIgnoringIndentation(")");
+        if (feature.AdditionalMethodPropertyMockingParameter.Name is string existing)
+        {
+            output.AppendIgnoringIndentation(",");
+            output.AppendLine(existing);
+        }
+        output.AppendIgnoringIndentation(");");
         indentation_insideSetupDelegate.Dispose();
-        output.AppendLine($"return new {method.SetupType}(__setup__);");
+        if (method.SetupVerifyTypeConstructorName is not null)
+            output.AppendLine($"return new {method.SetupVerifyType}(__local__);");
 
         indentation_insideMethod.Dispose();
         output.AppendLine("}");
     }
 
-    private static void WriteProperty(IPropertySymbol property, string onTypeWithName, string overloadSuffix, IndentingStringBuilder output)
-        => output.AppendLine($$"""
+    private static void WriteProperty(PropertyWritingContext property, IndentingStringBuilder output)
+    {
+        var symbol = property.Symbol;
+        var feature = property.Feature;
+        var passParameter = feature.AdditionalMethodPropertyMockingParameter;
+        var parameter = passParameter.Name is null ? null : $", {passParameter.Name}";
+        var returnType = feature.HasSetupVerifyType ? $"I{feature.Name}<{feature.Type.Name}, {symbol.Type}>" : "void";
+        output.AppendLine($$"""
 
-            public ISetup<{{onTypeWithName}}, {{property.Type}}> {{property.Name}}{{overloadSuffix}}()
+            public {{returnType}} {{symbol.Name}}{{property.OverloadSuffix}}({{passParameter.Text}})
             {
-                return mock.Setup(mock => mock.{{property.Name}});
+                return mock.{{feature.Name}}(mock => mock.{{symbol.Name}}{{parameter}});
             }
             """);
+    }
+
+    private static void WriteExtension(FeatureWritingContext feature, IndentingStringBuilder output)
+    {
+        var type = feature.Type;
+        output.AppendLine($$"""
+            {{GeneratedCodeAttribute}}
+            internal static class TypedMock{{feature.Name}}ExtensionFor_{{type.ShortName}}
+            {
+                public static {{feature.TypeName}} {{feature.Name}}(this {{type.MockName}} mock)
+                    => new {{feature.TypeName}}(mock);
+            }
+            """);
+    }
+
+    private static void WriteFeature(FeatureWritingContext feature, IndentingStringBuilder output)
+    {
+        WriteExtension(feature, output);
+        var type = feature.Type;
+        output.AppendLine($$"""
+
+            {{GeneratedCodeAttribute}}
+            internal sealed class {{feature.TypeName}}
+            {
+                private readonly {{type.MockName}} mock;
+            
+                public {{feature.TypeName}}({{type.MockName}} mock)
+                {
+                    this.mock = mock;
+                }
+            """);
+
+        var mockableMembers = type
+            .Symbol
+            .GetMembers()
+            .Where(member =>
+                (member.IsAbstract || member.IsVirtual)
+                && member.DeclaredAccessibility is not Accessibility.Private
+                && member is not IMethodSymbol { MethodKind: MethodKind.PropertyGet or MethodKind.PropertySet });
+        var overloadCounts = new OverloadCounter();
+
+        using var indentation = output.Indent();
+        foreach (var member in mockableMembers)
+            if (member is IMethodSymbol methodSymbol)
+            {
+                var overloadNumber = overloadCounts.Add(methodSymbol.Name);
+                var method = new MethodWritingContext(methodSymbol, OverloadSuffix(overloadNumber), feature, output);
+                WriteParametersContainerType(method);
+                WriteDelegates(method);
+                if (feature.HasSetupVerifyType)
+                    WriteSetupType(method);
+                WriteMethod(method, feature);
+            }
+            else if (member is IPropertySymbol propertySymbol)
+            {
+                var overloadNumber = overloadCounts.Add(propertySymbol.Name);
+                var overloadSuffix = OverloadSuffix(overloadNumber);
+                var property = new PropertyWritingContext(propertySymbol, overloadSuffix, feature);
+                WriteProperty(property, output);
+            }
+            else
+                throw new NotSupportedException($"Unsupported member {member}.");
+        indentation.Dispose();
+        output.AppendLine("}");
+    }
 
     private static string OverloadSuffix(int overloadNumber)
         => overloadNumber is 0 ? string.Empty : overloadNumber.ToString(CultureInfo.InvariantCulture);
 
     public static void Run(SourceProductionContext context, INamedTypeSymbol forType)
     {
-        static string TypeFullName(INamedTypeSymbol type)
-            => (type.ContainingType is INamedTypeSymbol existing ? TypeFullName(existing) + "_" : null) + type.Name;
-
         var output = new IndentingStringBuilder();
         var @namespace = forType.ContainingNamespace.ToDisplayString();
-        var typeName = forType.ToDisplayString();
-        var typeShortName = TypeFullName(forType);
-        var mockTypeName = $"Mock<{typeName}>";
-        var setupsTypeName = $"TypedMockFor_{typeShortName}";
-        var generatedCodeAttribute = "[GeneratedCode(\"Moq.Typed\", null)]";
-        var classesSource = $$"""
+        output.Append($$"""
             using Moq;
             using Moq.Language.Flow;
             using System;
@@ -246,80 +319,29 @@ internal static partial class TypedMockGenerator
 
             namespace {{@namespace}}
             {
-                {{generatedCodeAttribute}}
-                internal static class TypedMockSetupExtensionFor_{{typeShortName}}
-                {
-                    public static {{setupsTypeName}} Setup(this {{mockTypeName}} mock)
-                        => new {{setupsTypeName}}(mock);
-                }
+            """
+            );
 
-                {{generatedCodeAttribute}}
-                internal sealed class {{setupsTypeName}}
-                {
-                    private readonly {{mockTypeName}} mock;
+        using var namespaceIndentation = output.Indent();
+        var type = new TypeInfo(forType);
 
-                    public {{setupsTypeName}}({{mockTypeName}} mock)
-                    {
-                        this.mock = mock;
-                    }
-            """;
-        output.Append(classesSource);
+        var setup = new FeatureWritingContext(
+            "Setup",
+            type);
+        WriteFeature(setup, output);
 
-        var mockableMembers = forType
-            .GetMembers()
-            .Where(member =>
-                (member.IsAbstract || member.IsVirtual)
-                && member.DeclaredAccessibility is not Accessibility.Private
-                && member is not IMethodSymbol { MethodKind: MethodKind.PropertyGet or MethodKind.PropertySet });
+        var verify = new FeatureWritingContext(
+            "Verify",
+            type,
+            needsSetupType: false,
+            additionalMethodPropertyMockingParameter: new("Times", "times"));
+        //WriteFeature(verify, output);
 
-        var overloadCounts = new OverloadCounter();
-        using var indentation = output.Indent(2);
-        foreach (var member in mockableMembers)
-        {
-            if (member is IMethodSymbol methodSymbol)
-            {
-                var overloadNumber = overloadCounts.Add(methodSymbol.Name);
-                var method = new MethodWritingContext(methodSymbol, OverloadSuffix(overloadNumber), typeName, output);
-                WriteParametersContainerType(method);
-                WriteDelegates(method);
-                WriteSetupType(method);
-                WriteMethod(method);
-            }
-            else if (member is IPropertySymbol property)
-            {
-                var overloadNumber = overloadCounts.Add(property.Name);
-                var overloadSuffix = OverloadSuffix(overloadNumber);
-                WriteProperty(property, typeName, overloadSuffix, output);
-            }
-            else
-                throw new NotSupportedException($"Unsupported member {member}.");
-
-        }
-        indentation.Dispose();
-
+        namespaceIndentation.Dispose();
         output.AppendLine("""
-                }
             }
 
             """);
         context.AddSource($"{@namespace}.{forType.Name}", output.ToString());
-    }
-
-    private readonly struct OverloadCounter
-    {
-        private readonly Dictionary<string, int> state = new();
-
-        public OverloadCounter()
-        {
-        }
-
-        public int Add(string methodOrPropertyName)
-        {
-            var name = methodOrPropertyName;
-            var current = state.TryGetValue(name, out var value) ? value : -1;
-            var @new = current + 1;
-            state[name] = @new;
-            return @new;
-        }
     }
 }

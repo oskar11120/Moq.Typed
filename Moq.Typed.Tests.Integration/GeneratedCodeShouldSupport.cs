@@ -17,8 +17,8 @@ public class GeneratedCodeShouldSupport
         mock
             .Setup()
             .Execute()
-            .Callback((ref TypedMockFor_GeneratedCodeShouldSupport_IWithRef.ExecuteParameters parameters) => parameters.number++)
-            .Returns((ref TypedMockFor_GeneratedCodeShouldSupport_IWithRef.ExecuteParameters parameters) =>
+            .Callback((ref TypedMockSetupFor_GeneratedCodeShouldSupport_IWithRef.ExecuteParameters parameters) => parameters.number++)
+            .Returns((ref TypedMockSetupFor_GeneratedCodeShouldSupport_IWithRef.ExecuteParameters parameters) =>
             {
                 Assert.That(parameters.number, Is.EqualTo(2));
                 return 2;
