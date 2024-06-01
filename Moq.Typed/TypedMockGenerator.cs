@@ -358,6 +358,6 @@ internal static partial class TypedMockGenerator
             }
 
             """);
-        context.AddSource($"{@namespace}.{forType.Name}", output.ToString());
+        context.AddSource($"{forType}".Replace('<', '_').Replace('>', '_'), output.ToString());
     }
 }

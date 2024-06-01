@@ -1,4 +1,4 @@
-﻿//HintName: Moq.Typed.Tests.Unit.ITestable.cs
+﻿//HintName: Moq.Typed.Tests.Unit.ITestable_int_.cs
 using Moq;
 using Moq.Language.Flow;
 using System;
