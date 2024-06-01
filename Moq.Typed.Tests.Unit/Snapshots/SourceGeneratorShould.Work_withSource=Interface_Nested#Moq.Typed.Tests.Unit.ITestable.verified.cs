@@ -10,27 +10,30 @@ namespace Moq.Typed.Tests.Unit
     [GeneratedCode("Moq.Typed", null)]
     internal static class TypedMockSetupExtensionFor_Interfaces_ITestable
     {
-        public static TypedMockFor_Interfaces_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.Interfaces.ITestable> mock)
+        public static TypedMockFor_Interfaces_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock)
             => new TypedMockFor_Interfaces_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
     internal sealed class TypedMockFor_Interfaces_ITestable
     {
-        private readonly Mock<Moq.Typed.Tests.Unit.Interfaces.ITestable> mock;
+        private readonly Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock;
 
-        public TypedMockFor_Interfaces_ITestable(Mock<Moq.Typed.Tests.Unit.Interfaces.ITestable> mock)
+        public TypedMockFor_Interfaces_ITestable(Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock)
         {
             this.mock = mock;
         }
 
         public class FirstParameters
         {
+            public IEnumerable<int> values;
         }
 
-        private delegate void InternalFirstCallback();
+        private delegate void InternalFirstCallback(
+            IEnumerable<int> values);
 
-        private delegate int InternalFirstValueFunction();
+        private delegate int InternalFirstValueFunction(
+            IEnumerable<int> values);
 
         public delegate void FirstCallback(FirstParameters parameters);
 
@@ -38,9 +41,9 @@ namespace Moq.Typed.Tests.Unit
 
         public class FirstSetup
         {
-            private readonly ISetup<Moq.Typed.Tests.Unit.Interfaces.ITestable, int> setup;
+            private readonly ISetup<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable, int> setup;
 
-            public FirstSetup(ISetup<Moq.Typed.Tests.Unit.Interfaces.ITestable, int> setup)
+            public FirstSetup(ISetup<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable, int> setup)
             {
                 this.setup = setup;
             }
@@ -48,10 +51,11 @@ namespace Moq.Typed.Tests.Unit
             public FirstSetup Callback(FirstCallback callback)
             {
                 setup.Callback(new InternalFirstCallback(
-                    () => 
+                    (IEnumerable<int> values) => 
                     {
                         var __parameters__ = new FirstParameters
                         {
+                            values = values
                         };
                         callback(__parameters__);
                     }));
@@ -61,10 +65,11 @@ namespace Moq.Typed.Tests.Unit
             public FirstSetup Returns(FirstValueFunction valueFunction)
             {
                 setup.Returns(new InternalFirstValueFunction(
-                    () => 
+                    (IEnumerable<int> values) => 
                     {
                         var __parameters__ = new FirstParameters
                         {
+                            values = values
                         };
                         return valueFunction(__parameters__);
                     }));
@@ -72,9 +77,13 @@ namespace Moq.Typed.Tests.Unit
             }
         }
 
-        public FirstSetup First()
+        public FirstSetup First(
+            Func<IEnumerable<int>, bool>? values = null)
         {
-            var __setup__ = mock.Setup(mock => mock.First());
+            values ??= static _ => true;
+            Expression<Func<IEnumerable<int>, bool>> valuesExpression = argument => values(argument);
+            var __setup__ = mock.Setup(mock => mock.First(
+                It.Is(valuesExpression)));
             return new FirstSetup(__setup__);
         }
     }

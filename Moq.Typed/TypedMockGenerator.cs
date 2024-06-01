@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
 using System.Globalization;
 using System.Text;
 
@@ -10,8 +9,7 @@ internal static class TypedMockGenerator
     private static void WriteParametersContainerType(Method method, IndentingStringBuilder output)
     {
         output.AppendLine();
-        output.AppendLine($"public {(method.AnyInsOrRefs ? $"ref struct" : "class")} {method.ParametersContainerTypeName}");
-        output.AppendIgnoringIndentation(method.GenericTypeParameters);
+        output.AppendLine($"public {(method.AnyInsOrRefs ? $"ref struct" : "class")} {method.ParametersContainingType}");
         output.AppendLine("{");
 
         static string? Ref(IParameterSymbol parameter) => IsRef(parameter) ? " ref" : null;
@@ -23,15 +21,13 @@ internal static class TypedMockGenerator
     private static void WriteSetupType(Method method, IndentingStringBuilder output)
     {
         var symbol = method.Symbol;
-        var typeNameWithGenericParameters = $"{method.SetupTypeName}{method.GenericTypeParameters}";
-        var containerTypeNameWithGenericParameters = $"{method.ParametersContainerTypeName}{method.GenericTypeParameters}";
         var setupMoqInterface = symbol.ReturnsVoid ?
-            $"ISetup<{method.ContainingTypeName}>" :
-            $"ISetup<{method.ContainingTypeName}, {symbol.ReturnType}>";
+            $"ISetup<{method.ContainingType}>" :
+            $"ISetup<{method.ContainingType}, {symbol.ReturnType}>";
 
         output.AppendLine($$"""
 
-            public class {{typeNameWithGenericParameters}}
+            public class {{method.SetupType}}
             {
             """);
 
@@ -39,7 +35,7 @@ internal static class TypedMockGenerator
         output.AppendLine($$"""
             private readonly {{setupMoqInterface}} setup;
             
-            public {{method.SetupTypeName}}({{setupMoqInterface}} setup)
+            public {{method.SetupTypeConstructorName}}({{setupMoqInterface}} setup)
             {
                 this.setup = setup;
             }
@@ -55,13 +51,13 @@ internal static class TypedMockGenerator
         {
             var (name, parameterName) = delegates.Return ? ("Returns", "valueFunction") : ("Callback", "callback");
             output.AppendLine();
-            output.AppendLine($"public {typeNameWithGenericParameters} {name}({delegates.PublicType}{method.GenericTypeParameters} {parameterName})");
+            output.AppendLine($"public {method.SetupType} {name}({delegates.PublicType} {parameterName})");
             output.AppendLine($$"""
             {
-                setup.{{name}}(new {{delegates.InternalType + method.GenericTypeParameters}}(
+                setup.{{name}}(new {{delegates.InternalType}}(
                     ({{string.Join(", ", paramterTexts)}}) => 
                     {
-                        var __parameters__ = new {{containerTypeNameWithGenericParameters}}
+                        var __parameters__ = new {{method.ParametersContainingType}}
                         {
             """);
 
@@ -99,7 +95,7 @@ internal static class TypedMockGenerator
         {
             var symbol = delegates.OfMethod;
             output.AppendLine();
-            output.AppendLine($"private delegate {delegates.ReturnType} {delegates.InternalType}{method.GenericTypeParameters}(");
+            output.AppendLine($"private delegate {delegates.ReturnType} {delegates.InternalType}(");
             for (int i = 0; i < symbol.Parameters.Length; i++)
             {
                 var parameter = symbol.Parameters[i];
@@ -115,8 +111,8 @@ internal static class TypedMockGenerator
         {
             output.AppendLine();
             output.AppendLine(
-                $"public delegate {delegates.ReturnType} {delegates.PublicType}{method.GenericTypeParameters}(" +
-                $"{@ref}{method.ParametersContainerTypeName}{method.GenericTypeParameters} parameters);");
+                $"public delegate {delegates.ReturnType} {delegates.PublicType}(" +
+                $"{@ref}{method.ParametersContainingType} parameters);");
         }
 
         method.ForEachDelegate(WriteInternal);
@@ -164,10 +160,9 @@ internal static class TypedMockGenerator
     private static void WriteMethod(Method method, IndentingStringBuilder output)
     {
         var symbol = method.Symbol;
-        var setupTypeNameWithGenericParameters = method.SetupTypeName + method.GenericTypeParameters;
         output.AppendLine($"""
 
-            public {setupTypeNameWithGenericParameters} {symbol.Name}{method.GenericTypeParameters}
+            public {method.SetupType} {method.Name}
             """);
 
         static string Predicate(IParameterSymbol parameter) => $"Func<{parameter.Type}, bool>";
@@ -196,7 +191,7 @@ internal static class TypedMockGenerator
                     Expression<{Predicate(parameter)}> {parameter.Name}Expression = argument => {parameter.Name}(argument);
                     """);
 
-        output.AppendLine($"var __setup__ = mock.Setup(mock => mock.{symbol.Name}{method.GenericTypeParameters}(");
+        output.AppendLine($"var __setup__ = mock.Setup(mock => mock.{method.Name}(");
         using var indentation_insideSetupDelegate = output.Indent(1);
         for (int i = 0; i < methodParameters.Length; i++)
         {
@@ -213,7 +208,7 @@ internal static class TypedMockGenerator
         }
         output.AppendIgnoringIndentation("));");
         indentation_insideSetupDelegate.Dispose();
-        output.AppendLine($"return new {setupTypeNameWithGenericParameters}(__setup__);");
+        output.AppendLine($"return new {method.SetupType}(__setup__);");
 
         indentation_insideMethod.Dispose();
         output.AppendLine("}");
@@ -323,31 +318,37 @@ internal static class TypedMockGenerator
         }
 
         public readonly IMethodSymbol Symbol;
-        public readonly string ContainingTypeName;
+        public readonly string ContainingType;
 
         public Method(IMethodSymbol symbol, string overloadSuffix, string containingTypeName)
         {
             Symbol = symbol;
-            OverloadSuffix = overloadSuffix;
-            ContainingTypeName = containingTypeName;
+            ContainingType = containingTypeName;
 
-            ParametersContainerTypeName = Symbol.Name + "Parameters" + OverloadSuffix;
-            SetupTypeName = Symbol.Name + "Setup" + OverloadSuffix;
+            this.overloadSuffix = overloadSuffix;
+            genericTypeParameters = GetGenericTypeParameters();
+
+            Name = Symbol.Name + genericTypeParameters;
+            ParametersContainingType = Symbol.Name + "Parameters" + this.overloadSuffix + genericTypeParameters;
+            SetupTypeConstructorName = Symbol.Name + "Setup" + this.overloadSuffix;
+            SetupType = SetupTypeConstructorName + genericTypeParameters;
             AnyRefs = symbol.Parameters.Any(IsRef);
             AnyInsOrRefs = AnyRefs || symbol.Parameters.Any(parameter => parameter.RefKind is RefKind.In);
-            GenericTypeParameters = GetGenericTypeParameters();
-            CallbackDelegates = GetDelegates("Callback", false);
-            ValueFunctionDelegates = symbol.ReturnsVoid ? default : GetDelegates("ValueFunction", true);
+            CallbackDelegates = GetDelegates("Callback", genericTypeParameters, false);
+            ValueFunctionDelegates = symbol.ReturnsVoid ? default : GetDelegates("ValueFunction", genericTypeParameters, true);
         }
 
-        public readonly string OverloadSuffix;
-        public readonly string ParametersContainerTypeName;
-        public readonly string SetupTypeName;
+        private readonly string overloadSuffix;
+        private readonly string genericTypeParameters;
+
+        public readonly string Name;
+        public readonly string ParametersContainingType;
+        public readonly string SetupTypeConstructorName;
+        public readonly string SetupType;
         public readonly Delegates CallbackDelegates;
         public readonly Delegates ValueFunctionDelegates;
         public readonly bool AnyRefs;
         public readonly bool AnyInsOrRefs;
-        public readonly string GenericTypeParameters;
 
         public void ForEachDelegate(Action<Delegates> action)
         {
@@ -356,8 +357,8 @@ internal static class TypedMockGenerator
                 action(ValueFunctionDelegates);
         }
 
-        private Delegates GetDelegates(string kind, bool @return) =>
-            new(Symbol.MetadataName + kind + OverloadSuffix, @return, Symbol);
+        private Delegates GetDelegates(string kind, string genericTypeParameters, bool @return) =>
+            new(Symbol.MetadataName + kind + overloadSuffix + genericTypeParameters, @return, Symbol);
 
         private string GetGenericTypeParameters()
         {

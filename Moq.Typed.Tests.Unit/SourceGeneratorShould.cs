@@ -103,14 +103,15 @@ internal class SourceGeneratorShould
         [TestSourceId.Interface_Nested] = NewSource(
             """
             using static Interfaces;
-            public static class Interfaces
+            public static class Interfaces<T>
             {
                 public interface ITestable
                 {
-                    int First();
+                    int First(IEnumerable<T> values);
                 }
             }
-            """),
+            """,
+            "var mock = new Mock<Interfaces<int>.ITestable>();"),
         [TestSourceId.Interace_NestedMethodParameters] = NewSource(
             """
             public static class Parameters
