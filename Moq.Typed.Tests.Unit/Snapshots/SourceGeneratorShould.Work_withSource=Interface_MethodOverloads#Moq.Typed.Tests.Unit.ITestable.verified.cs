@@ -7,19 +7,20 @@ using System.Linq.Expressions;
 
 namespace Moq.Typed.Tests.Unit
 {
+
     [GeneratedCode("Moq.Typed", null)]
     internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMockFor_ITestable(mock);
+        public static TypedMockSetupFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockSetupFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal sealed class TypedMockFor_ITestable
+    internal sealed class TypedMockSetupFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockSetupFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
@@ -70,12 +71,15 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public MethodSetup Returns(int value)
+                => Returns(_ => value);
         }
 
         public MethodSetup Method()
         {
-            var __setup__ = mock.Setup(mock => mock.Method());
-            return new MethodSetup(__setup__);
+            var __local__ = mock.Setup(mock => mock.Method());
+            return new MethodSetup(__local__);
         }
 
         public class MethodParameters1
@@ -129,6 +133,9 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public MethodSetup1 Returns(int value)
+                => Returns(_ => value);
         }
 
         public MethodSetup1 Method(
@@ -136,9 +143,54 @@ namespace Moq.Typed.Tests.Unit
         {
             Parameter ??= static _ => true;
             Expression<Func<int, bool>> ParameterExpression = argument => Parameter(argument);
-            var __setup__ = mock.Setup(mock => mock.Method(
+            var __local__ = mock.Setup(mock => mock.Method(
                 It.Is(ParameterExpression)));
-            return new MethodSetup1(__setup__);
+            return new MethodSetup1(__local__);
+        }
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal static class TypedMockVerifyExtensionFor_ITestable
+    {
+        public static TypedMockVerifyFor_ITestable Verifyy(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockVerifyFor_ITestable(mock);
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal sealed class TypedMockVerifyFor_ITestable
+    {
+        private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
+
+        public TypedMockVerifyFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        {
+            this.mock = mock;
+        }
+
+        public class MethodParameters
+        {
+        }
+
+        public void Method(
+            Times times = default(Times)!)
+        {
+            mock.Verify(mock => mock.Method(),
+                times);
+        }
+
+        public class MethodParameters1
+        {
+            public int Parameter;
+        }
+
+        public void Method(
+            Func<int, bool>? Parameter = null,
+            Times times = default(Times)!)
+        {
+            Parameter ??= static _ => true;
+            Expression<Func<int, bool>> ParameterExpression = argument => Parameter(argument);
+            mock.Verify(mock => mock.Method(
+                It.Is(ParameterExpression)),
+                times);
         }
     }
 }

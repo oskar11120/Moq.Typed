@@ -7,19 +7,20 @@ using System.Linq.Expressions;
 
 namespace Moq.Typed.Tests.Unit
 {
+
     [GeneratedCode("Moq.Typed", null)]
     internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMockFor_ITestable(mock);
+        public static TypedMockSetupFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockSetupFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal sealed class TypedMockFor_ITestable
+    internal sealed class TypedMockSetupFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockSetupFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
@@ -63,9 +64,9 @@ namespace Moq.Typed.Tests.Unit
         {
             someGenericParam ??= static _ => true;
             Expression<Func<T, bool>> someGenericParamExpression = argument => someGenericParam(argument);
-            var __setup__ = mock.Setup(mock => mock.First<T>(
+            var __local__ = mock.Setup(mock => mock.First<T>(
                 It.Is(someGenericParamExpression)));
-            return new FirstSetup<T>(__setup__);
+            return new FirstSetup<T>(__local__);
         }
 
         public class SecondParameters<TInput, TOutput>
@@ -124,6 +125,9 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public SecondSetup<TInput, TOutput> Returns(TOutput value)
+                => Returns(_ => value);
         }
 
         public SecondSetup<TInput, TOutput> Second<TInput, TOutput>(
@@ -134,10 +138,65 @@ namespace Moq.Typed.Tests.Unit
             Expression<Func<int, bool>> someIntExpression = argument => someInt(argument);
             genericInput ??= static _ => true;
             Expression<Func<TInput, bool>> genericInputExpression = argument => genericInput(argument);
-            var __setup__ = mock.Setup(mock => mock.Second<TInput, TOutput>(
+            var __local__ = mock.Setup(mock => mock.Second<TInput, TOutput>(
                 It.Is(someIntExpression), 
                 It.Is(genericInputExpression)));
-            return new SecondSetup<TInput, TOutput>(__setup__);
+            return new SecondSetup<TInput, TOutput>(__local__);
+        }
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal static class TypedMockVerifyExtensionFor_ITestable
+    {
+        public static TypedMockVerifyFor_ITestable Verifyy(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockVerifyFor_ITestable(mock);
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal sealed class TypedMockVerifyFor_ITestable
+    {
+        private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
+
+        public TypedMockVerifyFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        {
+            this.mock = mock;
+        }
+
+        public class FirstParameters<T>
+        {
+            public T someGenericParam;
+        }
+
+        public void First<T>(
+            Func<T, bool>? someGenericParam = null,
+            Times times = default(Times)!)
+        {
+            someGenericParam ??= static _ => true;
+            Expression<Func<T, bool>> someGenericParamExpression = argument => someGenericParam(argument);
+            mock.Verify(mock => mock.First<T>(
+                It.Is(someGenericParamExpression)),
+                times);
+        }
+
+        public class SecondParameters<TInput, TOutput>
+        {
+            public int someInt;
+            public TInput genericInput;
+        }
+
+        public void Second<TInput, TOutput>(
+            Func<int, bool>? someInt = null, 
+            Func<TInput, bool>? genericInput = null,
+            Times times = default(Times)!)
+        {
+            someInt ??= static _ => true;
+            Expression<Func<int, bool>> someIntExpression = argument => someInt(argument);
+            genericInput ??= static _ => true;
+            Expression<Func<TInput, bool>> genericInputExpression = argument => genericInput(argument);
+            mock.Verify(mock => mock.Second<TInput, TOutput>(
+                It.Is(someIntExpression), 
+                It.Is(genericInputExpression)),
+                times);
         }
     }
 }

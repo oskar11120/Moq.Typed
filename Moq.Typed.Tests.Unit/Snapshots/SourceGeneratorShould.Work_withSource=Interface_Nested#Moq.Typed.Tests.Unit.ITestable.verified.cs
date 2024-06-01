@@ -7,19 +7,20 @@ using System.Linq.Expressions;
 
 namespace Moq.Typed.Tests.Unit
 {
+
     [GeneratedCode("Moq.Typed", null)]
     internal static class TypedMockSetupExtensionFor_Interfaces_ITestable
     {
-        public static TypedMockFor_Interfaces_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock)
-            => new TypedMockFor_Interfaces_ITestable(mock);
+        public static TypedMockSetupFor_Interfaces_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock)
+            => new TypedMockSetupFor_Interfaces_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal sealed class TypedMockFor_Interfaces_ITestable
+    internal sealed class TypedMockSetupFor_Interfaces_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock;
 
-        public TypedMockFor_Interfaces_ITestable(Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock)
+        public TypedMockSetupFor_Interfaces_ITestable(Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock)
         {
             this.mock = mock;
         }
@@ -75,6 +76,9 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public FirstSetup Returns(int value)
+                => Returns(_ => value);
         }
 
         public FirstSetup First(
@@ -82,9 +86,43 @@ namespace Moq.Typed.Tests.Unit
         {
             values ??= static _ => true;
             Expression<Func<IEnumerable<int>, bool>> valuesExpression = argument => values(argument);
-            var __setup__ = mock.Setup(mock => mock.First(
+            var __local__ = mock.Setup(mock => mock.First(
                 It.Is(valuesExpression)));
-            return new FirstSetup(__setup__);
+            return new FirstSetup(__local__);
+        }
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal static class TypedMockVerifyExtensionFor_Interfaces_ITestable
+    {
+        public static TypedMockVerifyFor_Interfaces_ITestable Verifyy(this Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock)
+            => new TypedMockVerifyFor_Interfaces_ITestable(mock);
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal sealed class TypedMockVerifyFor_Interfaces_ITestable
+    {
+        private readonly Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock;
+
+        public TypedMockVerifyFor_Interfaces_ITestable(Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock)
+        {
+            this.mock = mock;
+        }
+
+        public class FirstParameters
+        {
+            public IEnumerable<int> values;
+        }
+
+        public void First(
+            Func<IEnumerable<int>, bool>? values = null,
+            Times times = default(Times)!)
+        {
+            values ??= static _ => true;
+            Expression<Func<IEnumerable<int>, bool>> valuesExpression = argument => values(argument);
+            mock.Verify(mock => mock.First(
+                It.Is(valuesExpression)),
+                times);
         }
     }
 }

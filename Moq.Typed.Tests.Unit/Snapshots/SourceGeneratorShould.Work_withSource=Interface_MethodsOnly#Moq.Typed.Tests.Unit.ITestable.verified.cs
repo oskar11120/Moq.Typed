@@ -7,19 +7,20 @@ using System.Linq.Expressions;
 
 namespace Moq.Typed.Tests.Unit
 {
+
     [GeneratedCode("Moq.Typed", null)]
     internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMockFor_ITestable(mock);
+        public static TypedMockSetupFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockSetupFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal sealed class TypedMockFor_ITestable
+    internal sealed class TypedMockSetupFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockSetupFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
@@ -57,8 +58,8 @@ namespace Moq.Typed.Tests.Unit
 
         public FirstSetup First()
         {
-            var __setup__ = mock.Setup(mock => mock.First());
-            return new FirstSetup(__setup__);
+            var __local__ = mock.Setup(mock => mock.First());
+            return new FirstSetup(__local__);
         }
 
         public class SecondParameters
@@ -112,6 +113,9 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public SecondSetup Returns(int value)
+                => Returns(_ => value);
         }
 
         public SecondSetup Second(
@@ -119,9 +123,9 @@ namespace Moq.Typed.Tests.Unit
         {
             someInts ??= static _ => true;
             Expression<Func<IEnumerable<int>, bool>> someIntsExpression = argument => someInts(argument);
-            var __setup__ = mock.Setup(mock => mock.Second(
+            var __local__ = mock.Setup(mock => mock.Second(
                 It.Is(someIntsExpression)));
-            return new SecondSetup(__setup__);
+            return new SecondSetup(__local__);
         }
 
         public class ThirdParameters
@@ -175,11 +179,82 @@ namespace Moq.Typed.Tests.Unit
             Expression<Func<Moq.Typed.Tests.Unit.Parameter, bool>> oneMoreParameterExpression = argument => oneMoreParameter(argument);
             someInt ??= static _ => true;
             Expression<Func<int, bool>> someIntExpression = argument => someInt(argument);
-            var __setup__ = mock.Setup(mock => mock.Third(
+            var __local__ = mock.Setup(mock => mock.Third(
                 It.Is(someParametersExpression), 
                 It.Is(oneMoreParameterExpression), 
                 It.Is(someIntExpression)));
-            return new ThirdSetup(__setup__);
+            return new ThirdSetup(__local__);
+        }
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal static class TypedMockVerifyExtensionFor_ITestable
+    {
+        public static TypedMockVerifyFor_ITestable Verifyy(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockVerifyFor_ITestable(mock);
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal sealed class TypedMockVerifyFor_ITestable
+    {
+        private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
+
+        public TypedMockVerifyFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        {
+            this.mock = mock;
+        }
+
+        public class FirstParameters
+        {
+        }
+
+        public void First(
+            Times times = default(Times)!)
+        {
+            mock.Verify(mock => mock.First(),
+                times);
+        }
+
+        public class SecondParameters
+        {
+            public IEnumerable<int> someInts;
+        }
+
+        public void Second(
+            Func<IEnumerable<int>, bool>? someInts = null,
+            Times times = default(Times)!)
+        {
+            someInts ??= static _ => true;
+            Expression<Func<IEnumerable<int>, bool>> someIntsExpression = argument => someInts(argument);
+            mock.Verify(mock => mock.Second(
+                It.Is(someIntsExpression)),
+                times);
+        }
+
+        public class ThirdParameters
+        {
+            public IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters;
+            public Moq.Typed.Tests.Unit.Parameter oneMoreParameter;
+            public int someInt;
+        }
+
+        public void Third(
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>? someParameters = null, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool>? oneMoreParameter = null, 
+            Func<int, bool>? someInt = null,
+            Times times = default(Times)!)
+        {
+            someParameters ??= static _ => true;
+            Expression<Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>> someParametersExpression = argument => someParameters(argument);
+            oneMoreParameter ??= static _ => true;
+            Expression<Func<Moq.Typed.Tests.Unit.Parameter, bool>> oneMoreParameterExpression = argument => oneMoreParameter(argument);
+            someInt ??= static _ => true;
+            Expression<Func<int, bool>> someIntExpression = argument => someInt(argument);
+            mock.Verify(mock => mock.Third(
+                It.Is(someParametersExpression), 
+                It.Is(oneMoreParameterExpression), 
+                It.Is(someIntExpression)),
+                times);
         }
     }
 }

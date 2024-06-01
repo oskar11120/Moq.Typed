@@ -7,19 +7,20 @@ using System.Linq.Expressions;
 
 namespace Moq.Typed.Tests.Unit
 {
+
     [GeneratedCode("Moq.Typed", null)]
     internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMockFor_ITestable(mock);
+        public static TypedMockSetupFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockSetupFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal sealed class TypedMockFor_ITestable
+    internal sealed class TypedMockSetupFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockSetupFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
@@ -85,12 +86,59 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public GetterSetup1 Returns(int value)
+                => Returns(_ => value);
         }
 
         public GetterSetup1 Getter()
         {
-            var __setup__ = mock.Setup(mock => mock.Getter());
-            return new GetterSetup1(__setup__);
+            var __local__ = mock.Setup(mock => mock.Getter());
+            return new GetterSetup1(__local__);
+        }
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal static class TypedMockVerifyExtensionFor_ITestable
+    {
+        public static TypedMockVerifyFor_ITestable Verifyy(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockVerifyFor_ITestable(mock);
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal sealed class TypedMockVerifyFor_ITestable
+    {
+        private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
+
+        public TypedMockVerifyFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        {
+            this.mock = mock;
+        }
+
+        public void Getter(Times times = default(Times)!)
+        {
+            mock.Verify(mock => mock.Getter, times);
+        }
+
+        public void Mutable(Times times = default(Times)!)
+        {
+            mock.Verify(mock => mock.Mutable, times);
+        }
+
+        public void InitOnly(Times times = default(Times)!)
+        {
+            mock.Verify(mock => mock.InitOnly, times);
+        }
+
+        public class GetterParameters1
+        {
+        }
+
+        public void Getter(
+            Times times = default(Times)!)
+        {
+            mock.Verify(mock => mock.Getter(),
+                times);
         }
     }
 }

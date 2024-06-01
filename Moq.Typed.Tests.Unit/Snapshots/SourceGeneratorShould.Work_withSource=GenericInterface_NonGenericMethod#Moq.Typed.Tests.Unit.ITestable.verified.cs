@@ -7,19 +7,20 @@ using System.Linq.Expressions;
 
 namespace Moq.Typed.Tests.Unit
 {
+
     [GeneratedCode("Moq.Typed", null)]
     internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
-            => new TypedMockFor_ITestable(mock);
+        public static TypedMockSetupFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
+            => new TypedMockSetupFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal sealed class TypedMockFor_ITestable
+    internal sealed class TypedMockSetupFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock;
 
-        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
+        public TypedMockSetupFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
         {
             this.mock = mock;
         }
@@ -70,12 +71,15 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public FirstSetup Returns(int value)
+                => Returns(_ => value);
         }
 
         public FirstSetup First()
         {
-            var __setup__ = mock.Setup(mock => mock.First());
-            return new FirstSetup(__setup__);
+            var __local__ = mock.Setup(mock => mock.First());
+            return new FirstSetup(__local__);
         }
 
         public class SecondParameters
@@ -129,6 +133,9 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public SecondSetup Returns(int value)
+                => Returns(_ => value);
         }
 
         public SecondSetup Second(
@@ -136,9 +143,54 @@ namespace Moq.Typed.Tests.Unit
         {
             genericParam ??= static _ => true;
             Expression<Func<int, bool>> genericParamExpression = argument => genericParam(argument);
-            var __setup__ = mock.Setup(mock => mock.Second(
+            var __local__ = mock.Setup(mock => mock.Second(
                 It.Is(genericParamExpression)));
-            return new SecondSetup(__setup__);
+            return new SecondSetup(__local__);
+        }
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal static class TypedMockVerifyExtensionFor_ITestable
+    {
+        public static TypedMockVerifyFor_ITestable Verifyy(this Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
+            => new TypedMockVerifyFor_ITestable(mock);
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal sealed class TypedMockVerifyFor_ITestable
+    {
+        private readonly Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock;
+
+        public TypedMockVerifyFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable<int>> mock)
+        {
+            this.mock = mock;
+        }
+
+        public class FirstParameters
+        {
+        }
+
+        public void First(
+            Times times = default(Times)!)
+        {
+            mock.Verify(mock => mock.First(),
+                times);
+        }
+
+        public class SecondParameters
+        {
+            public int genericParam;
+        }
+
+        public void Second(
+            Func<int, bool>? genericParam = null,
+            Times times = default(Times)!)
+        {
+            genericParam ??= static _ => true;
+            Expression<Func<int, bool>> genericParamExpression = argument => genericParam(argument);
+            mock.Verify(mock => mock.Second(
+                It.Is(genericParamExpression)),
+                times);
         }
     }
 }

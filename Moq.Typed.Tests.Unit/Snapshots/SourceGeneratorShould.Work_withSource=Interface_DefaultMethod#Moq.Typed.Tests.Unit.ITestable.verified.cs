@@ -7,19 +7,20 @@ using System.Linq.Expressions;
 
 namespace Moq.Typed.Tests.Unit
 {
+
     [GeneratedCode("Moq.Typed", null)]
     internal static class TypedMockSetupExtensionFor_ITestable
     {
-        public static TypedMockFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
-            => new TypedMockFor_ITestable(mock);
+        public static TypedMockSetupFor_ITestable Setup(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockSetupFor_ITestable(mock);
     }
 
     [GeneratedCode("Moq.Typed", null)]
-    internal sealed class TypedMockFor_ITestable
+    internal sealed class TypedMockSetupFor_ITestable
     {
         private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
 
-        public TypedMockFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        public TypedMockSetupFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
         }
@@ -75,6 +76,9 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public IncrementSetup Returns(int value)
+                => Returns(_ => value);
         }
 
         public IncrementSetup Increment(
@@ -82,9 +86,43 @@ namespace Moq.Typed.Tests.Unit
         {
             number ??= static _ => true;
             Expression<Func<int, bool>> numberExpression = argument => number(argument);
-            var __setup__ = mock.Setup(mock => mock.Increment(
+            var __local__ = mock.Setup(mock => mock.Increment(
                 It.Is(numberExpression)));
-            return new IncrementSetup(__setup__);
+            return new IncrementSetup(__local__);
+        }
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal static class TypedMockVerifyExtensionFor_ITestable
+    {
+        public static TypedMockVerifyFor_ITestable Verifyy(this Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+            => new TypedMockVerifyFor_ITestable(mock);
+    }
+
+    [GeneratedCode("Moq.Typed", null)]
+    internal sealed class TypedMockVerifyFor_ITestable
+    {
+        private readonly Mock<Moq.Typed.Tests.Unit.ITestable> mock;
+
+        public TypedMockVerifyFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
+        {
+            this.mock = mock;
+        }
+
+        public class IncrementParameters
+        {
+            public int number;
+        }
+
+        public void Increment(
+            Func<int, bool>? number = null,
+            Times times = default(Times)!)
+        {
+            number ??= static _ => true;
+            Expression<Func<int, bool>> numberExpression = argument => number(argument);
+            mock.Verify(mock => mock.Increment(
+                It.Is(numberExpression)),
+                times);
         }
     }
 }
