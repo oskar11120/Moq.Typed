@@ -81,15 +81,14 @@ internal static partial class TypedMockGenerator
 
         method.ForEachDelegate(WriteMethod);
 
-        // TODO
-        //if (!method.Symbol.ReturnsVoid)
-        //{
-        //    output.AppendLine($$"""
+        if (!method.Symbol.ReturnsVoid && !method.AnyRefs)
+        {
+            output.AppendLine($$"""
 
-        //    public {{typeNameWithGenericParameters}} Returns({{method.ReturnType}} value)
-        //        => Returns(_ => value);
-        //    """);
-        //}
+            public {{method.SetupVerifyType}} Returns({{symbol.ReturnType}} value)
+                => Returns(_ => value);
+            """);
+        }
 
         indentation_insideClass.Dispose();
         output.AppendLine("}");
@@ -251,6 +250,7 @@ internal static partial class TypedMockGenerator
     {
         var type = feature.Type;
         output.AppendLine($$"""
+
             {{GeneratedCodeAttribute}}
             internal static class TypedMock{{feature.Name}}ExtensionFor_{{type.ShortName}}
             {
