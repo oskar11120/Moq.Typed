@@ -122,8 +122,8 @@ internal static partial class TypedMockGenerator
                 action(ValueFunctionDelegates);
         }
 
-        public delegate string GetText(IParameterSymbol symbol, string? @refPrefix);
-        public void ForEachParameterWrite(GetText getText, bool comaDelimit, int atIndentation = 0)
+        public delegate string GetText<TArgs>(IParameterSymbol symbol, string? @refPrefix, TArgs args);
+        public void ForEachParameterWrite<TArgs>(TArgs arguments, GetText<TArgs> getText, bool comaDelimit, int atIndentation = 0)
         {
             var parameters = Symbol.Parameters;
             using var indentation = Output.Indent(atIndentation);
@@ -131,12 +131,16 @@ internal static partial class TypedMockGenerator
             {
                 var parameter = parameters[i];
                 var @ref = IsRef(parameter) ? " ref" : null;
-                var text = getText(parameter, @ref);
+                var text = getText(parameter, @ref, arguments);
                 Output.AppendLine(text);
-                if (comaDelimit)
+                if (comaDelimit && text.Length is not 0)
                     Output.AppendIgnoringIndentation(Comma(i, parameters.Length));
             }
         }
+
+        public delegate string GetText(IParameterSymbol symbol, string? @refPrefix);
+        public void ForEachParameterWrite(GetText getText, bool comaDelimit, int atIndentation = 0)
+            => ForEachParameterWrite(getText, static (symbol, @ref, getText) => getText(symbol, @ref), comaDelimit, atIndentation);
 
         private Delegates GetDelegates(string kind, string genericTypeParameters, bool @return) =>
             new(Symbol.MetadataName + kind + OverloadSuffix + genericTypeParameters, @return, Symbol);
