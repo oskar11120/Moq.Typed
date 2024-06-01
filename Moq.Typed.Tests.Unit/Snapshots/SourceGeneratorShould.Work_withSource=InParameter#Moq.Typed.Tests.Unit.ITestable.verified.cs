@@ -24,7 +24,7 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
-        public ref struct MethodParameters
+        public class MethodParameters
         {
             public int inParameter;
         }

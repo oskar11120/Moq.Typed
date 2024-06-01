@@ -6,13 +6,14 @@ namespace Moq.Typed;
 
 internal static class TypedMockGenerator
 {
+    private static string? Ref(IParameterSymbol parameter) => IsRef(parameter) ? " ref" : null;
+
     private static void WriteParametersContainerType(Method method, IndentingStringBuilder output)
     {
         output.AppendLine();
-        output.AppendLine($"public {(method.AnyInsOrRefs ? $"ref struct" : "class")} {method.ParametersContainingType}");
+        output.AppendLine($"public {(method.AnyRefs ? $"ref struct" : "class")} {method.ParametersContainingType}");
         output.AppendLine("{");
 
-        static string? Ref(IParameterSymbol parameter) => IsRef(parameter) ? " ref" : null;
         foreach (var parameter in method.Symbol.Parameters)
             output.AppendLine($"public{Ref(parameter)} {parameter.Type} {parameter.Name};", 1);
         output.AppendLine("}");
@@ -62,11 +63,12 @@ internal static class TypedMockGenerator
             """);
 
             foreach (var parameter in method.Symbol.Parameters)
-                output.AppendLine($"{parameter.Name} = {(parameter.RefKind is RefKind.Ref ? "ref " : null)}{parameter.Name}", 4);
+                output.AppendLine($"{parameter.Name} ={Ref(parameter)} {parameter.Name}", 4);
 
+            var @ref = method.AnyRefs ? "ref " : null;
             output.AppendLine($$"""
                         };
-                        {{(delegates.Return ? "return " : null)}}{{parameterName}}({{(method.AnyRefs ? "ref " : null)}}__parameters__);
+                        {{(delegates.Return ? "return " : null)}}{{parameterName}}({{@ref}}__parameters__);
                     }));
                 return this;
             }
@@ -333,7 +335,6 @@ internal static class TypedMockGenerator
             SetupTypeConstructorName = Symbol.Name + "Setup" + this.overloadSuffix;
             SetupType = SetupTypeConstructorName + genericTypeParameters;
             AnyRefs = symbol.Parameters.Any(IsRef);
-            AnyInsOrRefs = AnyRefs || symbol.Parameters.Any(parameter => parameter.RefKind is RefKind.In);
             CallbackDelegates = GetDelegates("Callback", genericTypeParameters, false);
             ValueFunctionDelegates = symbol.ReturnsVoid ? default : GetDelegates("ValueFunction", genericTypeParameters, true);
         }
@@ -348,7 +349,6 @@ internal static class TypedMockGenerator
         public readonly Delegates CallbackDelegates;
         public readonly Delegates ValueFunctionDelegates;
         public readonly bool AnyRefs;
-        public readonly bool AnyInsOrRefs;
 
         public void ForEachDelegate(Action<Delegates> action)
         {
