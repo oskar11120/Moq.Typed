@@ -4,6 +4,7 @@ using Moq.Language.Flow;
 using System;
 using System.CodeDom.Compiler;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Moq.Typed.Tests.Unit
 {
@@ -25,15 +26,22 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
+        #nullable disable warnings
         public class MethodParameters
         {
             public int outParameter;
         }
+        #nullable enable warnings
 
         private delegate void InternalMethodCallback(
             int outParameter);
 
+        private delegate TException InternalMethodExceptionFunction<TException>(
+            int outParameter);
+
         public delegate void MethodCallback(MethodParameters parameters);
+
+        public delegate TException MethodExceptionFunction<TException>(MethodParameters parameters);
 
         public class MethodSetup
         {
@@ -55,6 +63,38 @@ namespace Moq.Typed.Tests.Unit
                         };
                         callback(__parameters__);
                     }));
+                return this;
+            }
+
+            public MethodSetup Throws<TException>(MethodExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalMethodExceptionFunction<TException>(
+                    (int outParameter) => 
+                    {
+                        var __parameters__ = new MethodParameters
+                        {
+                            outParameter = outParameter
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public MethodSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public MethodSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public MethodSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
                 return this;
             }
         }
@@ -83,11 +123,6 @@ namespace Moq.Typed.Tests.Unit
         public TypedMockVerifyFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
-        }
-
-        public class MethodParameters
-        {
-            public int outParameter;
         }
 
         public void Method(

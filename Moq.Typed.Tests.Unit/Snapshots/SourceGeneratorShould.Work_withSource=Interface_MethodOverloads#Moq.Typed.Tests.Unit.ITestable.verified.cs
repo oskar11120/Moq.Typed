@@ -4,6 +4,7 @@ using Moq.Language.Flow;
 using System;
 using System.CodeDom.Compiler;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Moq.Typed.Tests.Unit
 {
@@ -25,17 +26,23 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
+        #nullable disable warnings
         public class MethodParameters
         {
         }
+        #nullable enable warnings
 
         private delegate void InternalMethodCallback();
 
         private delegate int InternalMethodValueFunction();
 
+        private delegate TException InternalMethodExceptionFunction<TException>();
+
         public delegate void MethodCallback(MethodParameters parameters);
 
         public delegate int MethodValueFunction(MethodParameters parameters);
+
+        public delegate TException MethodExceptionFunction<TException>(MethodParameters parameters);
 
         public class MethodSetup
         {
@@ -74,6 +81,37 @@ namespace Moq.Typed.Tests.Unit
 
             public MethodSetup Returns(int value)
                 => Returns(_ => value);
+
+            public MethodSetup Throws<TException>(MethodExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalMethodExceptionFunction<TException>(
+                    () => 
+                    {
+                        var __parameters__ = new MethodParameters
+                        {
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public MethodSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public MethodSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public MethodSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public MethodSetup Method()
@@ -82,10 +120,12 @@ namespace Moq.Typed.Tests.Unit
             return new MethodSetup(__local__);
         }
 
+        #nullable disable warnings
         public class MethodParameters1
         {
             public int Parameter;
         }
+        #nullable enable warnings
 
         private delegate void InternalMethodCallback1(
             int Parameter);
@@ -93,9 +133,14 @@ namespace Moq.Typed.Tests.Unit
         private delegate int InternalMethodValueFunction1(
             int Parameter);
 
+        private delegate TException InternalMethodExceptionFunction1<TException>(
+            int Parameter);
+
         public delegate void MethodCallback1(MethodParameters1 parameters);
 
         public delegate int MethodValueFunction1(MethodParameters1 parameters);
+
+        public delegate TException MethodExceptionFunction1<TException>(MethodParameters1 parameters);
 
         public class MethodSetup1
         {
@@ -136,6 +181,38 @@ namespace Moq.Typed.Tests.Unit
 
             public MethodSetup1 Returns(int value)
                 => Returns(_ => value);
+
+            public MethodSetup1 Throws<TException>(MethodExceptionFunction1<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalMethodExceptionFunction1<TException>(
+                    (int Parameter) => 
+                    {
+                        var __parameters__ = new MethodParameters1
+                        {
+                            Parameter = Parameter
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public MethodSetup1 Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public MethodSetup1 Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public MethodSetup1 Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public MethodSetup1 Method(
@@ -166,20 +243,11 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
-        public class MethodParameters
-        {
-        }
-
         public void Method(
             Times times = default(Times)!)
         {
             mock.Verify(mock => mock.Method(),
                 times);
-        }
-
-        public class MethodParameters1
-        {
-            public int Parameter;
         }
 
         public void Method(

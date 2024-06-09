@@ -4,6 +4,7 @@ using Moq.Language.Flow;
 using System;
 using System.CodeDom.Compiler;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Moq.Typed.Tests.Unit
 {
@@ -40,17 +41,23 @@ namespace Moq.Typed.Tests.Unit
             return mock.Setup(mock => mock.InitOnly);
         }
 
+        #nullable disable warnings
         public class GetterParameters1
         {
         }
+        #nullable enable warnings
 
         private delegate void InternalGetterCallback1();
 
         private delegate int InternalGetterValueFunction1();
 
+        private delegate TException InternalGetterExceptionFunction1<TException>();
+
         public delegate void GetterCallback1(GetterParameters1 parameters);
 
         public delegate int GetterValueFunction1(GetterParameters1 parameters);
+
+        public delegate TException GetterExceptionFunction1<TException>(GetterParameters1 parameters);
 
         public class GetterSetup1
         {
@@ -89,6 +96,37 @@ namespace Moq.Typed.Tests.Unit
 
             public GetterSetup1 Returns(int value)
                 => Returns(_ => value);
+
+            public GetterSetup1 Throws<TException>(GetterExceptionFunction1<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalGetterExceptionFunction1<TException>(
+                    () => 
+                    {
+                        var __parameters__ = new GetterParameters1
+                        {
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public GetterSetup1 Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public GetterSetup1 Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public GetterSetup1 Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public GetterSetup1 Getter()
@@ -128,10 +166,6 @@ namespace Moq.Typed.Tests.Unit
         public void InitOnly(Times times = default(Times)!)
         {
             mock.Verify(mock => mock.InitOnly, times);
-        }
-
-        public class GetterParameters1
-        {
         }
 
         public void Getter(

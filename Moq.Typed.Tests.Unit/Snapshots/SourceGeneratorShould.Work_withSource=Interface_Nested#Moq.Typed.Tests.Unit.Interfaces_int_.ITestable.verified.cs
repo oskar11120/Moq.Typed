@@ -4,6 +4,7 @@ using Moq.Language.Flow;
 using System;
 using System.CodeDom.Compiler;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Moq.Typed.Tests.Unit
 {
@@ -25,10 +26,12 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
+        #nullable disable warnings
         public class FirstParameters
         {
             public IEnumerable<int> values;
         }
+        #nullable enable warnings
 
         private delegate void InternalFirstCallback(
             IEnumerable<int> values);
@@ -36,9 +39,14 @@ namespace Moq.Typed.Tests.Unit
         private delegate int InternalFirstValueFunction(
             IEnumerable<int> values);
 
+        private delegate TException InternalFirstExceptionFunction<TException>(
+            IEnumerable<int> values);
+
         public delegate void FirstCallback(FirstParameters parameters);
 
         public delegate int FirstValueFunction(FirstParameters parameters);
+
+        public delegate TException FirstExceptionFunction<TException>(FirstParameters parameters);
 
         public class FirstSetup
         {
@@ -79,6 +87,38 @@ namespace Moq.Typed.Tests.Unit
 
             public FirstSetup Returns(int value)
                 => Returns(_ => value);
+
+            public FirstSetup Throws<TException>(FirstExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalFirstExceptionFunction<TException>(
+                    (IEnumerable<int> values) => 
+                    {
+                        var __parameters__ = new FirstParameters
+                        {
+                            values = values
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public FirstSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public FirstSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public FirstSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public FirstSetup First(
@@ -107,11 +147,6 @@ namespace Moq.Typed.Tests.Unit
         public TypedMockVerifyFor_Interfaces_ITestable(Mock<Moq.Typed.Tests.Unit.Interfaces<int>.ITestable> mock)
         {
             this.mock = mock;
-        }
-
-        public class FirstParameters
-        {
-            public IEnumerable<int> values;
         }
 
         public void First(

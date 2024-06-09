@@ -39,9 +39,14 @@ namespace Moq.Typed.Tests.Unit
         private delegate Task InternalMethodValueFunction(
             int parameter);
 
+        private delegate TException InternalMethodExceptionFunction<TException>(
+            int parameter);
+
         public delegate void MethodCallback(MethodParameters parameters);
 
         public delegate Task MethodValueFunction(MethodParameters parameters);
+
+        public delegate TException MethodExceptionFunction<TException>(MethodParameters parameters);
 
         public class MethodSetup
         {
@@ -82,6 +87,38 @@ namespace Moq.Typed.Tests.Unit
 
             public MethodSetup Returns(Task value)
                 => Returns(_ => value);
+
+            public MethodSetup Throws<TException>(MethodExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalMethodExceptionFunction<TException>(
+                    (int parameter) => 
+                    {
+                        var __parameters__ = new MethodParameters
+                        {
+                            parameter = parameter
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public MethodSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public MethodSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public MethodSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public MethodSetup Method(
@@ -104,9 +141,13 @@ namespace Moq.Typed.Tests.Unit
 
         private delegate ValueTask<int> InternalMethodValueFunction1();
 
+        private delegate TException InternalMethodExceptionFunction1<TException>();
+
         public delegate void MethodCallback1(MethodParameters1 parameters);
 
         public delegate ValueTask<int> MethodValueFunction1(MethodParameters1 parameters);
+
+        public delegate TException MethodExceptionFunction1<TException>(MethodParameters1 parameters);
 
         public class MethodSetup1
         {
@@ -159,6 +200,37 @@ namespace Moq.Typed.Tests.Unit
                     await Task.CompletedTask;
                     return value;
                 });
+
+            public MethodSetup1 Throws<TException>(MethodExceptionFunction1<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalMethodExceptionFunction1<TException>(
+                    () => 
+                    {
+                        var __parameters__ = new MethodParameters1
+                        {
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public MethodSetup1 Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public MethodSetup1 Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public MethodSetup1 Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public MethodSetup1 Method()

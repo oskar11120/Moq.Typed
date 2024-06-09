@@ -4,6 +4,7 @@ using Moq.Language.Flow;
 using System;
 using System.CodeDom.Compiler;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Moq.Typed.Tests.Unit
 {
@@ -25,13 +26,19 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
+        #nullable disable warnings
         public class FirstParameters
         {
         }
+        #nullable enable warnings
 
         private delegate void InternalFirstCallback();
 
+        private delegate TException InternalFirstExceptionFunction<TException>();
+
         public delegate void FirstCallback(FirstParameters parameters);
+
+        public delegate TException FirstExceptionFunction<TException>(FirstParameters parameters);
 
         public class FirstSetup
         {
@@ -54,6 +61,37 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public FirstSetup Throws<TException>(FirstExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalFirstExceptionFunction<TException>(
+                    () => 
+                    {
+                        var __parameters__ = new FirstParameters
+                        {
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public FirstSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public FirstSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public FirstSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public FirstSetup First()
@@ -62,10 +100,12 @@ namespace Moq.Typed.Tests.Unit
             return new FirstSetup(__local__);
         }
 
+        #nullable disable warnings
         public class SecondParameters
         {
             public IEnumerable<int> someInts;
         }
+        #nullable enable warnings
 
         private delegate void InternalSecondCallback(
             IEnumerable<int> someInts);
@@ -73,9 +113,14 @@ namespace Moq.Typed.Tests.Unit
         private delegate int InternalSecondValueFunction(
             IEnumerable<int> someInts);
 
+        private delegate TException InternalSecondExceptionFunction<TException>(
+            IEnumerable<int> someInts);
+
         public delegate void SecondCallback(SecondParameters parameters);
 
         public delegate int SecondValueFunction(SecondParameters parameters);
+
+        public delegate TException SecondExceptionFunction<TException>(SecondParameters parameters);
 
         public class SecondSetup
         {
@@ -116,6 +161,38 @@ namespace Moq.Typed.Tests.Unit
 
             public SecondSetup Returns(int value)
                 => Returns(_ => value);
+
+            public SecondSetup Throws<TException>(SecondExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalSecondExceptionFunction<TException>(
+                    (IEnumerable<int> someInts) => 
+                    {
+                        var __parameters__ = new SecondParameters
+                        {
+                            someInts = someInts
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public SecondSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public SecondSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public SecondSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public SecondSetup Second(
@@ -128,19 +205,28 @@ namespace Moq.Typed.Tests.Unit
             return new SecondSetup(__local__);
         }
 
+        #nullable disable warnings
         public class ThirdParameters
         {
             public IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters;
             public Moq.Typed.Tests.Unit.Parameter oneMoreParameter;
             public int someInt;
         }
+        #nullable enable warnings
 
         private delegate void InternalThirdCallback(
             IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
             Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
             int someInt);
 
+        private delegate TException InternalThirdExceptionFunction<TException>(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            int someInt);
+
         public delegate void ThirdCallback(ThirdParameters parameters);
+
+        public delegate TException ThirdExceptionFunction<TException>(ThirdParameters parameters);
 
         public class ThirdSetup
         {
@@ -164,6 +250,40 @@ namespace Moq.Typed.Tests.Unit
                         };
                         callback(__parameters__);
                     }));
+                return this;
+            }
+
+            public ThirdSetup Throws<TException>(ThirdExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalThirdExceptionFunction<TException>(
+                    (IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, Moq.Typed.Tests.Unit.Parameter oneMoreParameter, int someInt) => 
+                    {
+                        var __parameters__ = new ThirdParameters
+                        {
+                            someParameters = someParameters, 
+                            oneMoreParameter = oneMoreParameter, 
+                            someInt = someInt
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public ThirdSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public ThirdSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public ThirdSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
                 return this;
             }
         }
@@ -204,20 +324,11 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
-        public class FirstParameters
-        {
-        }
-
         public void First(
             Times times = default(Times)!)
         {
             mock.Verify(mock => mock.First(),
                 times);
-        }
-
-        public class SecondParameters
-        {
-            public IEnumerable<int> someInts;
         }
 
         public void Second(
@@ -229,13 +340,6 @@ namespace Moq.Typed.Tests.Unit
             mock.Verify(mock => mock.Second(
                 It.Is(someIntsExpression)),
                 times);
-        }
-
-        public class ThirdParameters
-        {
-            public IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters;
-            public Moq.Typed.Tests.Unit.Parameter oneMoreParameter;
-            public int someInt;
         }
 
         public void Third(

@@ -4,6 +4,7 @@ using Moq.Language.Flow;
 using System;
 using System.CodeDom.Compiler;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Moq.Typed.Tests.Unit
 {
@@ -25,13 +26,19 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
+        #nullable disable warnings
         public class PublicParameters
         {
         }
+        #nullable enable warnings
 
         private delegate void InternalPublicCallback();
 
+        private delegate TException InternalPublicExceptionFunction<TException>();
+
         public delegate void PublicCallback(PublicParameters parameters);
+
+        public delegate TException PublicExceptionFunction<TException>(PublicParameters parameters);
 
         public class PublicSetup
         {
@@ -54,6 +61,37 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public PublicSetup Throws<TException>(PublicExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalPublicExceptionFunction<TException>(
+                    () => 
+                    {
+                        var __parameters__ = new PublicParameters
+                        {
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public PublicSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public PublicSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public PublicSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public PublicSetup Public()
@@ -62,10 +100,12 @@ namespace Moq.Typed.Tests.Unit
             return new PublicSetup(__local__);
         }
 
+        #nullable disable warnings
         public class InternalParameters
         {
             public object someObject;
         }
+        #nullable enable warnings
 
         private delegate void InternalInternalCallback(
             object someObject);
@@ -73,9 +113,14 @@ namespace Moq.Typed.Tests.Unit
         private delegate int InternalInternalValueFunction(
             object someObject);
 
+        private delegate TException InternalInternalExceptionFunction<TException>(
+            object someObject);
+
         public delegate void InternalCallback(InternalParameters parameters);
 
         public delegate int InternalValueFunction(InternalParameters parameters);
+
+        public delegate TException InternalExceptionFunction<TException>(InternalParameters parameters);
 
         public class InternalSetup
         {
@@ -116,6 +161,38 @@ namespace Moq.Typed.Tests.Unit
 
             public InternalSetup Returns(int value)
                 => Returns(_ => value);
+
+            public InternalSetup Throws<TException>(InternalExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalInternalExceptionFunction<TException>(
+                    (object someObject) => 
+                    {
+                        var __parameters__ = new InternalParameters
+                        {
+                            someObject = someObject
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public InternalSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public InternalSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public InternalSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public InternalSetup Internal(
@@ -146,20 +223,11 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
-        public class PublicParameters
-        {
-        }
-
         public void Public(
             Times times = default(Times)!)
         {
             mock.Verify(mock => mock.Public(),
                 times);
-        }
-
-        public class InternalParameters
-        {
-            public object someObject;
         }
 
         public void Internal(

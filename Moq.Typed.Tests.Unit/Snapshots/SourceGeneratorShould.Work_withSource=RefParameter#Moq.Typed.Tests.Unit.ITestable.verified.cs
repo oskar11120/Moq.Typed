@@ -4,6 +4,7 @@ using Moq.Language.Flow;
 using System;
 using System.CodeDom.Compiler;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Moq.Typed.Tests.Unit
 {
@@ -25,10 +26,12 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
+        #nullable disable warnings
         public ref struct MethodParameters
         {
             public ref int refParameter;
         }
+        #nullable enable warnings
 
         private delegate void InternalMethodCallback(
             ref int refParameter);
@@ -36,9 +39,14 @@ namespace Moq.Typed.Tests.Unit
         private delegate int InternalMethodValueFunction(
             ref int refParameter);
 
+        private delegate TException InternalMethodExceptionFunction<TException>(
+            ref int refParameter);
+
         public delegate void MethodCallback(ref MethodParameters parameters);
 
         public delegate int MethodValueFunction(ref MethodParameters parameters);
+
+        public delegate TException MethodExceptionFunction<TException>(ref MethodParameters parameters);
 
         public class MethodSetup
         {
@@ -76,6 +84,38 @@ namespace Moq.Typed.Tests.Unit
                     }));
                 return this;
             }
+
+            public MethodSetup Throws<TException>(MethodExceptionFunction<TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalMethodExceptionFunction<TException>(
+                    (ref int refParameter) => 
+                    {
+                        var __parameters__ = new MethodParameters
+                        {
+                            refParameter = ref refParameter
+                        };
+                        return exceptionFunction(ref __parameters__);
+                    }));
+                return this;
+            }
+
+            public MethodSetup Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public MethodSetup Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public MethodSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public MethodSetup Method()
@@ -101,11 +141,6 @@ namespace Moq.Typed.Tests.Unit
         public TypedMockVerifyFor_ITestable(Mock<Moq.Typed.Tests.Unit.ITestable> mock)
         {
             this.mock = mock;
-        }
-
-        public ref struct MethodParameters
-        {
-            public ref int refParameter;
         }
 
         public void Method(

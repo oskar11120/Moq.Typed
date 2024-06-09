@@ -4,6 +4,7 @@ using Moq.Language.Flow;
 using System;
 using System.CodeDom.Compiler;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace Moq.Typed.Tests.Unit
 {
@@ -25,10 +26,12 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
+        #nullable disable warnings
         public class FirstParameters<TInput>
         {
             public TInput genericParam;
         }
+        #nullable enable warnings
 
         private delegate void InternalFirstCallback<TInput>(
             TInput genericParam);
@@ -36,9 +39,14 @@ namespace Moq.Typed.Tests.Unit
         private delegate int InternalFirstValueFunction<TInput>(
             TInput genericParam);
 
+        private delegate TException InternalFirstExceptionFunction<TInput, TException>(
+            TInput genericParam);
+
         public delegate void FirstCallback<TInput>(FirstParameters<TInput> parameters);
 
         public delegate int FirstValueFunction<TInput>(FirstParameters<TInput> parameters);
+
+        public delegate TException FirstExceptionFunction<TInput, TException>(FirstParameters<TInput> parameters);
 
         public class FirstSetup<TInput>
         {
@@ -79,6 +87,38 @@ namespace Moq.Typed.Tests.Unit
 
             public FirstSetup<TInput> Returns(int value)
                 => Returns(_ => value);
+
+            public FirstSetup<TInput> Throws<TException>(FirstExceptionFunction<TInput, TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalFirstExceptionFunction<TInput, TException>(
+                    (TInput genericParam) => 
+                    {
+                        var __parameters__ = new FirstParameters<TInput>
+                        {
+                            genericParam = genericParam
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public FirstSetup<TInput> Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public FirstSetup<TInput> Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public FirstSetup<TInput> Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public FirstSetup<TInput> First<TInput>(
@@ -91,10 +131,12 @@ namespace Moq.Typed.Tests.Unit
             return new FirstSetup<TInput>(__local__);
         }
 
+        #nullable disable warnings
         public class SecondParameters<TOutput>
         {
             public int genericParam;
         }
+        #nullable enable warnings
 
         private delegate void InternalSecondCallback<TOutput>(
             int genericParam);
@@ -102,9 +144,14 @@ namespace Moq.Typed.Tests.Unit
         private delegate TOutput InternalSecondValueFunction<TOutput>(
             int genericParam);
 
+        private delegate TException InternalSecondExceptionFunction<TOutput, TException>(
+            int genericParam);
+
         public delegate void SecondCallback<TOutput>(SecondParameters<TOutput> parameters);
 
         public delegate TOutput SecondValueFunction<TOutput>(SecondParameters<TOutput> parameters);
+
+        public delegate TException SecondExceptionFunction<TOutput, TException>(SecondParameters<TOutput> parameters);
 
         public class SecondSetup<TOutput>
         {
@@ -145,6 +192,38 @@ namespace Moq.Typed.Tests.Unit
 
             public SecondSetup<TOutput> Returns(TOutput value)
                 => Returns(_ => value);
+
+            public SecondSetup<TOutput> Throws<TException>(SecondExceptionFunction<TOutput, TException> exceptionFunction) where TException : Exception
+            {
+                setup.Throws(new InternalSecondExceptionFunction<TOutput, TException>(
+                    (int genericParam) => 
+                    {
+                        var __parameters__ = new SecondParameters<TOutput>
+                        {
+                            genericParam = genericParam
+                        };
+                        return exceptionFunction(__parameters__);
+                    }));
+                return this;
+            }
+
+            public SecondSetup<TOutput> Throws(Exception exception)
+            {
+                setup.Throws(exception);
+                return this;
+            }
+
+            public SecondSetup<TOutput> Throws<TException>() where TException : Exception, new()
+            {
+                setup.Throws<TException>();
+                return this;
+            }
+
+            public SecondSetup<TOutput> Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+            {
+                setup.Throws<TException>(exceptionFunction);
+                return this;
+            }
         }
 
         public SecondSetup<TOutput> Second<TOutput>(
@@ -175,11 +254,6 @@ namespace Moq.Typed.Tests.Unit
             this.mock = mock;
         }
 
-        public class FirstParameters<TInput>
-        {
-            public TInput genericParam;
-        }
-
         public void First<TInput>(
             Func<TInput, bool>? genericParam = null,
             Times times = default(Times)!)
@@ -189,11 +263,6 @@ namespace Moq.Typed.Tests.Unit
             mock.Verify(mock => mock.First<TInput>(
                 It.Is(genericParamExpression)),
                 times);
-        }
-
-        public class SecondParameters<TOutput>
-        {
-            public int genericParam;
         }
 
         public void Second<TOutput>(
