@@ -128,16 +128,10 @@ internal sealed class IndentingStringBuilder : IDisposable
 
     public void Dispose() => ArrayPool<char>.Shared.Return(buffer);
 
-    public struct Indentiation : IDisposable
+    public struct Indentiation(IndentingStringBuilder builder, int times) : IDisposable
     {
-        private readonly IndentingStringBuilder builder;
-        private int times;
-
-        public Indentiation(IndentingStringBuilder builder, int times)
-        {
-            this.builder = builder;
-            this.times = times;
-        }
+        private readonly IndentingStringBuilder builder = builder;
+        private int times = times;
 
         public void Dispose()
         {

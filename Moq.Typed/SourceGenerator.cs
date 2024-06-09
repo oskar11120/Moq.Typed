@@ -28,7 +28,7 @@ public sealed class SourceGenerator : IIncrementalGenerator
         memberAccess.Expression is IdentifierNameSyntax identifierName &&
         HasMockText(identifierName) &&
         memberAccess.Name.Identifier.ValueText is "Get";
-    static INamedTypeSymbol? GetMockedType(GeneratorSyntaxContext context, InvocationExpressionSyntax mockGetCall, CancellationToken token)
+    static INamedTypeSymbol? GetMockedType(GeneratorSyntaxContext context, InvocationExpressionSyntax mockGetCall)
     {
         var argument = mockGetCall.ArgumentList.Arguments[0].Expression;
         return context.SemanticModel.GetTypeInfo(argument).Type as INamedTypeSymbol;
@@ -43,7 +43,7 @@ public sealed class SourceGenerator : IIncrementalGenerator
                 (context, token) => context.Node switch
                 {
                     ObjectCreationExpressionSyntax ctorCall => GetMockedType(context, ctorCall, token),
-                    InvocationExpressionSyntax getCall => GetMockedType(context, getCall, token),
+                    InvocationExpressionSyntax getCall => GetMockedType(context, getCall),
                     _ => throw new NotSupportedException()
                 })
             .Where(type => type is not null);

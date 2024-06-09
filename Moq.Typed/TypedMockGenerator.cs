@@ -9,6 +9,7 @@ internal static partial class TypedMockGenerator
     {
         var output = method.Output;
         output.AppendLine();
+        output.AppendLine("#nullable disable warnings");
         output.AppendLine($"public {(method.AnyRefs ? $"ref struct" : "class")} {method.ParametersContainingType}");
         output.AppendLine("{");
         method.ForEachParameterWrite(
@@ -16,6 +17,7 @@ internal static partial class TypedMockGenerator
             false,
             1);
         output.AppendLine("}");
+        output.AppendLine("#nullable enable warnings");
     }
 
     private static void WriteSetupType(MethodWritingContext method)
@@ -256,7 +258,7 @@ internal static partial class TypedMockGenerator
         var type = feature.Type;
         output.AppendLine($$"""
 
-            {{GeneratedCodeAttribute}}
+            {{generatedCodeAttribute}}
             internal static class TypedMock{{feature.Name}}ExtensionFor_{{type.ShortName}}
             {
                 public static {{feature.TypeName}} {{feature.ExtensionName}}(this {{type.MockName}} mock)
@@ -271,7 +273,7 @@ internal static partial class TypedMockGenerator
         var type = feature.Type;
         output.AppendLine($$"""
 
-            {{GeneratedCodeAttribute}}
+            {{generatedCodeAttribute}}
             internal sealed class {{feature.TypeName}}
             {
                 private readonly {{type.MockName}} mock;

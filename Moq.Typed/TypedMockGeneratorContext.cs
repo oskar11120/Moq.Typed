@@ -5,7 +5,7 @@ namespace Moq.Typed;
 
 internal static partial class TypedMockGenerator
 {
-    private static readonly string GeneratedCodeAttribute = "[GeneratedCode(\"Moq.Typed\", null)]";
+    private const string generatedCodeAttribute = "[GeneratedCode(\"Moq.Typed\", null)]";
     private sealed class TypeInfo
     {
         public TypeInfo(INamedTypeSymbol symbol)
@@ -30,43 +30,26 @@ internal static partial class TypedMockGenerator
         public readonly string? Text = Type is null ? null : $"{Type} {Name} = default({Type})!";
     }
 
-    private sealed class FeatureWritingContext
+    private sealed class FeatureWritingContext(
+        string name,
+        TypeInfo type,
+        bool needsSetupType = true,
+        string? extensionName = default,
+        MethodParameter additionalMethodPropertyMockingParameter = default)
     {
-        public FeatureWritingContext(
-            string name,
-            TypeInfo type,
-            bool needsSetupType = true,
-            string? extensionName = default,
-            MethodParameter additionalMethodPropertyMockingParameter = default)
-        {
-            Name = name;
-            Type = type;
-            ExtensionName = extensionName ?? name;
-            HasSetupVerifyType = needsSetupType;
-            TypeName = $"TypedMock{name}For_{type.ShortName}";
-            AdditionalMethodPropertyMockingParameter = additionalMethodPropertyMockingParameter;
-        }
-
-        public readonly string Name;
-        public readonly TypeInfo Type;
-        public readonly string ExtensionName;
-        public readonly MethodParameter AdditionalMethodPropertyMockingParameter;
-        public readonly bool HasSetupVerifyType;
-        public readonly string TypeName;
+        public readonly string Name = name;
+        public readonly TypeInfo Type = type;
+        public readonly string ExtensionName = extensionName ?? name;
+        public readonly MethodParameter AdditionalMethodPropertyMockingParameter = additionalMethodPropertyMockingParameter;
+        public readonly bool HasSetupVerifyType = needsSetupType;
+        public readonly string TypeName = $"TypedMock{name}For_{type.ShortName}";
     }
 
-    private readonly struct PropertyWritingContext
+    private readonly struct PropertyWritingContext(IPropertySymbol symbol, string overloadSuffix, FeatureWritingContext feature)
     {
-        public PropertyWritingContext(IPropertySymbol symbol, string overloadSuffix, FeatureWritingContext feature)
-        {
-            Symbol = symbol;
-            OverloadSuffix = overloadSuffix;
-            Feature = feature;
-        }
-
-        public readonly IPropertySymbol Symbol;
-        public readonly string OverloadSuffix;
-        public readonly FeatureWritingContext Feature;
+        public readonly IPropertySymbol Symbol = symbol;
+        public readonly string OverloadSuffix = overloadSuffix;
+        public readonly FeatureWritingContext Feature = feature;
     }
 
     private readonly struct MethodWritingContext
@@ -169,7 +152,7 @@ internal static partial class TypedMockGenerator
 
     private readonly struct OverloadCounter
     {
-        private readonly Dictionary<string, int> state = new();
+        private readonly Dictionary<string, int> state = [];
 
         public OverloadCounter()
         {
