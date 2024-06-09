@@ -7,6 +7,18 @@
     <ImplicitUsings>true</ImplicitUsings>
     <LangVersion>Latest</LangVersion>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <NoWarn>NU5128</NoWarn>
+
+    <Version>0.9</Version>
+    <Description>Cleaner API for Moq using source generators.</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Authors>Oskar Furlepa</Authors>
+    <PackageProjectUrl>https://github.com/oskar11120/Moq.Typed</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/oskar11120/Moq.Typed</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>moq;tdd;mocking;mocks;unittesting;unittest;generator;generate;typed;type</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
