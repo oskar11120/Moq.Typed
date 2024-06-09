@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -155,7 +156,7 @@ public class GeneratedCodeShouldSupport
     [Test]
     public async Task TaskLikes()
     {
-        var mock = new Mock<IWithTaskLikes>();       
+        var mock = new Mock<IWithTaskLikes>();
         mock
             .Setup()
             .Execute()
@@ -166,5 +167,10 @@ public class GeneratedCodeShouldSupport
             .Execute(number => number == 1)
             .ReturnsAsync(2);
         await Assert.ThatAsync(() => mock.Object.Execute(1), Is.EqualTo(2));
+        mock
+            .Setup()
+            .Execute(number => number == 2)
+            .Throws(parameters => new InvalidOperationException());
+        Assert.ThrowsAsync<InvalidOperationException>(() => mock.Object.Execute(2));
     }
 }

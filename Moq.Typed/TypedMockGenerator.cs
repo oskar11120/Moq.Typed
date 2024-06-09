@@ -50,11 +50,16 @@ internal static partial class TypedMockGenerator
         var paramterTexts = symbol.Parameters.Select(parameter => parameter.RefKind is RefKind.Out ?
             $"{parameter.Type} {parameter.Name}" : $"{parameter.ToDisplayString()}");
 
-        void WriteMethod(MethodWritingContext.Delegates delegates)
+        void WriteMethod(
+            MethodWritingContext.Delegates delegates,
+            string name,
+            string parameterName,
+            string? typeArgument = null,
+            string? genericConstrant = null)
         {
-            var (name, parameterName) = delegates.Return ? ("Returns", "valueFunction") : ("Callback", "callback");
+            typeArgument = typeArgument is not null ? $"<{typeArgument}>" : typeArgument;
             output.AppendLine();
-            output.AppendLine($"public {method.SetupVerifyType} {name}({delegates.PublicType} {parameterName})");
+            output.AppendLine($"public {method.SetupVerifyType} {name}{typeArgument}({delegates.PublicType} {parameterName}){genericConstrant}");
             output.AppendLine($$"""
             {
                 setup.{{name}}(new {{delegates.InternalType}}(
@@ -79,28 +84,26 @@ internal static partial class TypedMockGenerator
             """);
         }
 
-        method.ForEachDelegate(WriteMethod);
+        WriteMethod(method.CallbackDelegates, "Callback", "callback");
+        if (method.ValueFunctionDelegates != default)
+            WriteMethod(method.ValueFunctionDelegates, "Returns", "valueFunction");
 
-        if (!method.AnyRefs)
+        var methodTaskLikeResultType = TaskLikeResultType.Get(method.Symbol.ReturnType);
+
+        void WriteReturnsConvenienceMethods()
         {
-            if(!method.Symbol.ReturnsVoid)
+            if (!method.Symbol.ReturnsVoid)
                 output.AppendLine($$"""
 
                 public {{method.SetupVerifyType}} Returns({{symbol.ReturnType}} value)
                     => Returns(_ => value);
                 """);
 
-            var returnType = method.Symbol.ReturnType;
-            var typeArguments = returnType is INamedTypeSymbol named ? named.TypeArguments : [];
-            var returnsTaskLikeWithValue =
-                returnType.OriginalDefinition.Name is "Task" or "ValueTask" &&
-                returnType.ContainingNamespace.ToDisplayString() is "<global namespace>" or "System.Threading.Tasks" &&
-                typeArguments.Length is 1;
-            if (returnsTaskLikeWithValue)
+            if (methodTaskLikeResultType is not null)
             {
                 output.AppendLine($$"""
 
-                public {{method.SetupVerifyType}} ReturnsAsync(Func<{{method.ParametersContainingType}}, {{typeArguments[0]}}> valueFunction)
+                public {{method.SetupVerifyType}} ReturnsAsync(Func<{{method.ParametersContainingType}}, {{methodTaskLikeResultType}}> valueFunction)
                     => Returns(async parameters => 
                     {
                         await Task.CompletedTask;
@@ -110,7 +113,7 @@ internal static partial class TypedMockGenerator
 
                 output.AppendLine($$"""
 
-                public {{method.SetupVerifyType}} ReturnsAsync({{typeArguments[0]}} value)
+                public {{method.SetupVerifyType}} ReturnsAsync({{methodTaskLikeResultType}} value)
                     => Returns(async _ => 
                     {
                         await Task.CompletedTask;
@@ -119,6 +122,47 @@ internal static partial class TypedMockGenerator
                 """);
             }
         }
+
+        if (!method.AnyRefs)
+            WriteReturnsConvenienceMethods();
+
+
+        WriteMethod(
+            method.ExceptionFunctionDelegates,
+            "Throws",
+            "exceptionFunction",
+            method.ExceptionFunctionDelegates.ReturnType,
+            $" where {method.ExceptionFunctionDelegates.ReturnType} : Exception");
+
+        void WriteThrowsConvenienceMethods()
+        {
+            output.AppendLine($$"""
+
+                public {{method.SetupVerifyType}} Throws(Exception exception)
+                {
+                    setup.Throws(exception);
+                    return this;
+                }
+                """);
+            output.AppendLine($$"""
+
+                public {{method.SetupVerifyType}} Throws<TException>() where TException : Exception, new()
+                {
+                    setup.Throws<TException>();
+                    return this;
+                }
+                """);
+            output.AppendLine($$"""
+
+                public {{method.SetupVerifyType}} Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+                {
+                    setup.Throws<TException>(exceptionFunction);
+                    return this;
+                }
+                """);
+        }
+
+        WriteThrowsConvenienceMethods();
 
         indentation_insideClass.Dispose();
         output.AppendLine("}");
@@ -249,7 +293,7 @@ internal static partial class TypedMockGenerator
                 RefKind.Out => $"out {parameter.Name}",
                 RefKind.Ref => $"ref It.Ref<{parameter.Type}>.IsAny",
                 RefKind.RefReadOnlyParameter or RefKind.In => $"in It.Ref<{parameter.Type}>.IsAny",
-               _ => $"It.IsAny<{parameter.Type}>()"
+                _ => $"It.IsAny<{parameter.Type}>()"
             },
             true);
         output.AppendIgnoringIndentation(")");

@@ -54,10 +54,13 @@ internal static partial class TypedMockGenerator
 
     private readonly struct MethodWritingContext
     {
-        public readonly record struct Delegates(string PublicType, bool Return, IMethodSymbol OfMethod)
+        public readonly record struct Delegates(
+            string PublicType, 
+            bool Return, 
+            string ReturnType, 
+            IMethodSymbol OfMethod)
         {
             public readonly string InternalType = "Internal" + PublicType;
-            public readonly string ReturnType = Return ? OfMethod.ReturnType.ToDisplayString() : "void";
         }
 
         public readonly IMethodSymbol Symbol;
@@ -78,8 +81,15 @@ internal static partial class TypedMockGenerator
             Name = Symbol.Name + GenericTypeParameters;
             ParametersContainingType = Symbol.Name + "Parameters" + OverloadSuffix + GenericTypeParameters;
             AnyRefs = symbol.Parameters.Any(IsRef);
-            CallbackDelegates = GetDelegates("Callback", GenericTypeParameters, false);
-            ValueFunctionDelegates = symbol.ReturnsVoid || !feature.HasSetupVerifyType ? default : GetDelegates("ValueFunction", GenericTypeParameters, true);
+
+            string ApplyConflctResolutionSuffix(string newTypeParameter, int i = 0)
+                => symbol.TypeParameters.Any(existing => existing.Name == newTypeParameter) ?
+                ApplyConflctResolutionSuffix(newTypeParameter + i.ToString(), i + 1) : newTypeParameter;
+            var exceptionTypeParameter = ApplyConflctResolutionSuffix("TException");
+            ExceptionFunctionDelegates = GetDelegates("ExceptionFunction", GetGenericTypeParameters(exceptionTypeParameter), true, exceptionTypeParameter);
+            CallbackDelegates = GetDelegates("Callback", GenericTypeParameters, false, "void");
+            ValueFunctionDelegates = symbol.ReturnsVoid || !feature.HasSetupVerifyType ?
+                default : GetDelegates("ValueFunction", GenericTypeParameters, true, symbol.ReturnType.ToDisplayString());
 
             SetupVerifyType = "void";
             if (feature.HasSetupVerifyType)
@@ -95,6 +105,7 @@ internal static partial class TypedMockGenerator
         public readonly string? SetupVerifyTypeConstructorName;
         public readonly string SetupVerifyType;
         public readonly Delegates CallbackDelegates;
+        public readonly Delegates ExceptionFunctionDelegates;
         public readonly Delegates ValueFunctionDelegates;
         public readonly bool AnyRefs;
 
@@ -103,6 +114,7 @@ internal static partial class TypedMockGenerator
             action(CallbackDelegates);
             if (ValueFunctionDelegates != default)
                 action(ValueFunctionDelegates);
+            action(ExceptionFunctionDelegates);
         }
 
         public delegate string GetText<TArgs>(IParameterSymbol symbol, string? @refPrefix, TArgs args);
@@ -125,20 +137,27 @@ internal static partial class TypedMockGenerator
         public void ForEachParameterWrite(GetText getText, bool comaDelimit, int atIndentation = 0)
             => ForEachParameterWrite(getText, static (symbol, @ref, getText) => getText(symbol, @ref), comaDelimit, atIndentation);
 
-        private Delegates GetDelegates(string kind, string genericTypeParameters, bool @return) =>
-            new(Symbol.MetadataName + kind + OverloadSuffix + genericTypeParameters, @return, Symbol);
+        private Delegates GetDelegates(string kind, string genericTypeParameters, bool @return, string returnType) =>
+            new(Symbol.MetadataName + kind + OverloadSuffix + genericTypeParameters, @return, returnType, Symbol);
 
-        private string GetGenericTypeParameters()
+        private string GetGenericTypeParameters(string? withAdditionalParameter = null)
         {
             var typeParameters = Symbol.TypeParameters;
             if (typeParameters.Length is 0)
-                return string.Empty;
+                return withAdditionalParameter is null ? string.Empty : $"<{withAdditionalParameter}>";
 
             var output = new StringBuilder();
             output.Append("<");
             for (int i = 0; i < typeParameters.Length; i++)
             {
-                output.Append($"{typeParameters[i]}{Comma(i, typeParameters.Length)}");
+                output.Append($"{typeParameters[i]}");
+                output.Append(Comma(i, typeParameters.Length));
+            }
+
+            if (withAdditionalParameter is not null)
+            {
+                output.Append(comma);
+                output.Append(withAdditionalParameter);
             }
 
             output.Append(">");
