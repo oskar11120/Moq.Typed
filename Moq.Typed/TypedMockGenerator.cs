@@ -182,7 +182,7 @@ internal static partial class TypedMockGenerator
             },
             true,
             1);
-        var anyWritten = symbol.Parameters.Any(parameter => 
+        var anyWritten = symbol.Parameters.Any(parameter =>
             parameter.RefKind is RefKind.None ||
             (parameter.RefKind is RefKind.Out && feature.HasSetupVerifyType));
         if (feature.AdditionalMethodPropertyMockingParameter.Text is string additionalParamText)
@@ -198,7 +198,7 @@ internal static partial class TypedMockGenerator
         using var indentation_insideMethod = output.Indent(1);
         method.ForEachParameterWrite(
             feature,
-            static (parameter, method, feature) => parameter.RefKind switch 
+            static (parameter, method, feature) => parameter.RefKind switch
             {
                 RefKind.None => $"""
                     {parameter.Name} ??= static _ => true;
@@ -207,7 +207,7 @@ internal static partial class TypedMockGenerator
                 RefKind.Out when feature.HasSetupVerifyType is false => $"{parameter.Type} {parameter.Name};",
                 _ => string.Empty
             },
-            false);;
+            false);
 
         var local = feature.HasSetupVerifyType ? "var __local__ = " : null;
         output.AppendLine($"{local}mock.{feature.Name}(mock => mock.{method.Name}(");
@@ -216,9 +216,10 @@ internal static partial class TypedMockGenerator
             static (parameter, method) => parameter.RefKind switch
             {
                 RefKind.None => $"It.Is({parameter.Name}Expression)",
-                RefKind.Out=> $"out {parameter.Name}",
-                RefKind.Ref or RefKind.RefReadOnlyParameter or RefKind.In => $"ref It.Ref<{parameter.Type}>.IsAny",
-                _ => $"It.IsAny<{parameter.Type}>()"
+                RefKind.Out => $"out {parameter.Name}",
+                RefKind.Ref => $"ref It.Ref<{parameter.Type}>.IsAny",
+                RefKind.RefReadOnlyParameter or RefKind.In => $"in It.Ref<{parameter.Type}>.IsAny",
+               _ => $"It.IsAny<{parameter.Type}>()"
             },
             true);
         output.AppendIgnoringIndentation(")");
@@ -299,9 +300,9 @@ internal static partial class TypedMockGenerator
             {
                 var overloadNumber = overloadCounts.Add(methodSymbol.Name);
                 var method = new MethodWritingContext(methodSymbol, OverloadSuffix(overloadNumber), feature, output);
-                WriteParametersContainerType(method);
                 if (feature.HasSetupVerifyType)
                 {
+                    WriteParametersContainerType(method);
                     WriteDelegates(method);
                     WriteSetupType(method);
                 }
