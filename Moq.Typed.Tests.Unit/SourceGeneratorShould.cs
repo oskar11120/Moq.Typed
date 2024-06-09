@@ -23,7 +23,8 @@ internal class SourceGeneratorShould
         MultipleMocks_OfTheSameInterface,
         OutParameter,
         RefParameter,
-        InParameter
+        InParameter,
+        TaskLikeReturnType
     }
 
     private static string NewSource(string testTypes, string testContent = "var first = new Mock<ITestable>();") => $$"""
@@ -185,6 +186,14 @@ internal class SourceGeneratorShould
             public interface ITestable
             {
                 void Method(in int inParameter);
+            }
+            """),
+        [TestSourceId.TaskLikeReturnType] = NewSource(
+            """
+            public interface ITestable
+            {
+                Task Method(int parameter);
+                ValueTask<int> Method();
             }
             """)
     };

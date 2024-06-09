@@ -81,13 +81,43 @@ internal static partial class TypedMockGenerator
 
         method.ForEachDelegate(WriteMethod);
 
-        if (!method.Symbol.ReturnsVoid && !method.AnyRefs)
+        if (!method.AnyRefs)
         {
-            output.AppendLine($$"""
+            if(!method.Symbol.ReturnsVoid)
+                output.AppendLine($$"""
 
-            public {{method.SetupVerifyType}} Returns({{symbol.ReturnType}} value)
-                => Returns(_ => value);
-            """);
+                public {{method.SetupVerifyType}} Returns({{symbol.ReturnType}} value)
+                    => Returns(_ => value);
+                """);
+
+            var returnType = method.Symbol.ReturnType;
+            var typeArguments = returnType is INamedTypeSymbol named ? named.TypeArguments : [];
+            var returnsTaskLikeWithValue =
+                returnType.OriginalDefinition.Name is "Task" or "ValueTask" &&
+                returnType.ContainingNamespace.ToDisplayString() is "<global namespace>" or "System.Threading.Tasks" &&
+                typeArguments.Length is 1;
+            if (returnsTaskLikeWithValue)
+            {
+                output.AppendLine($$"""
+
+                public {{method.SetupVerifyType}} ReturnsAsync(Func<{{method.ParametersContainingType}}, {{typeArguments[0]}}> valueFunction)
+                    => Returns(async parameters => 
+                    {
+                        await Task.CompletedTask;
+                        return valueFunction(parameters);
+                    });
+                """);
+
+                output.AppendLine($$"""
+
+                public {{method.SetupVerifyType}} ReturnsAsync({{typeArguments[0]}} value)
+                    => Returns(async _ => 
+                    {
+                        await Task.CompletedTask;
+                        return value;
+                    });
+                """);
+            }
         }
 
         indentation_insideClass.Dispose();
@@ -334,6 +364,7 @@ internal static partial class TypedMockGenerator
             using System;
             using System.CodeDom.Compiler;
             using System.Linq.Expressions;
+            using System.Threading.Tasks;
 
             namespace {{@namespace}}
             {

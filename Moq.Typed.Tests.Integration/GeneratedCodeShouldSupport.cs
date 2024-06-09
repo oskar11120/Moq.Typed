@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Moq.Typed.Tests.Integration;
 
@@ -143,5 +144,27 @@ public class GeneratedCodeShouldSupport
         mock
             .Verifyy()
             .Execute<int>(paramInts => paramInts == ints);
+    }
+
+    public interface IWithTaskLikes
+    {
+        Task<int> Execute(int number);
+        ValueTask<int> Execute();
+    }
+
+    [Test]
+    public async Task TaskLikes()
+    {
+        var mock = new Mock<IWithTaskLikes>();       
+        mock
+            .Setup()
+            .Execute()
+            .ReturnsAsync(parameters => 1);
+        await Assert.ThatAsync(() => mock.Object.Execute().AsTask(), Is.EqualTo(1));
+        mock
+            .Setup()
+            .Execute(number => number == 1)
+            .ReturnsAsync(2);
+        await Assert.ThatAsync(() => mock.Object.Execute(1), Is.EqualTo(2));
     }
 }
