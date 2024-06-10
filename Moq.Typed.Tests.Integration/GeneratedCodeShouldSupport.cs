@@ -35,6 +35,8 @@ public class GeneratedCodeShouldSupport
     public interface IWithIn
     {
         int Execute(in int number);
+        int Execute<T>(in T number);
+        int Execute(in string text);
     }
 
     [Test]
@@ -159,7 +161,7 @@ public class GeneratedCodeShouldSupport
         var mock = new Mock<IWithTaskLikes>();
         mock
             .Setup()
-            .Execute()
+            .Execute1()
             .ReturnsAsync(parameters => 1);
         await Assert.ThatAsync(() => mock.Object.Execute().AsTask(), Is.EqualTo(1));
         mock

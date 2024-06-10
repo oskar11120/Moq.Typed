@@ -234,13 +234,26 @@ internal static partial class TypedMockGenerator
             Write(typeParameter);
     }
 
+    private static void WriteMethodOverloads(MethodWritingContext method, FeatureWritingContext feature)
+    {
+        var normalAndOutParameters = method
+            .Symbol
+            .Parameters
+            .Where(parameter => parameter.RefKind is RefKind.None or RefKind.Out)
+            .ToArray();
+        for (int i = 0; i < normalAndOutParameters.Length; i++)
+        {
+
+        }
+    }
+
     private static void WriteMethod(MethodWritingContext method, FeatureWritingContext feature)
     {
         var symbol = method.Symbol;
         var output = method.Output;
         output.AppendLine($"""
 
-            public {method.SetupVerifyType} {method.Name}
+            public {method.SetupVerifyType} {method.Symbol.Name}{method.OverloadSuffix}{method.GenericTypeParameters}
             """);
 
         var methodParameters = symbol.Parameters;
@@ -284,7 +297,7 @@ internal static partial class TypedMockGenerator
             false);
 
         var local = feature.HasSetupVerifyType ? "var __local__ = " : null;
-        output.AppendLine($"{local}mock.{feature.Name}(mock => mock.{method.Name}(");
+        output.AppendLine($"{local}mock.{feature.Name}(mock => mock.{method.Symbol.Name}{method.GenericTypeParameters}(");
         using var indentation_insideSetupDelegate = output.Indent(1);
         method.ForEachParameterWrite(
             static (parameter, method) => parameter.RefKind switch

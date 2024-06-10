@@ -78,7 +78,6 @@ internal static partial class TypedMockGenerator
             Feature = feature;
 
             GenericTypeParameters = GetGenericTypeParameters();
-            Name = Symbol.Name + GenericTypeParameters;
             ParametersContainingType = Symbol.Name + "Parameters" + OverloadSuffix + GenericTypeParameters;
             AnyRefs = symbol.Parameters.Any(IsRef);
 
@@ -99,7 +98,6 @@ internal static partial class TypedMockGenerator
             }
         }
 
-        public readonly string Name;
         public readonly string GenericTypeParameters;
         public readonly string ParametersContainingType;
         public readonly string? SetupVerifyTypeConstructorName;
