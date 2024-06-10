@@ -234,18 +234,6 @@ internal static partial class TypedMockGenerator
             Write(typeParameter);
     }
 
-    private static void WriteMethodOverloads(MethodWritingContext method, FeatureWritingContext feature)
-    {
-        var normalAndOutParameters = method
-            .Symbol
-            .Parameters
-            .Where(parameter => parameter.RefKind is RefKind.None or RefKind.Out)
-            .ToArray();
-        for (int i = 0; i < normalAndOutParameters.Length; i++)
-        {
-
-        }
-    }
 
     private static void WriteMethod(MethodWritingContext method, FeatureWritingContext feature)
     {
@@ -253,11 +241,10 @@ internal static partial class TypedMockGenerator
         var output = method.Output;
         output.AppendLine($"""
 
-            public {method.SetupVerifyType} {method.Symbol.Name}{method.OverloadSuffix}{method.GenericTypeParameters}
+            public {method.SetupVerifyType} {method.Symbol.Name}{method.OverloadSuffix}{method.GenericTypeParameters}(
             """);
 
         var methodParameters = symbol.Parameters;
-        output.AppendIgnoringIndentation("(");
         static string Predicate(IParameterSymbol parameter) => $"Func<{parameter.Type}, bool>";
         method.ForEachParameterWrite(
             feature,
@@ -322,6 +309,47 @@ internal static partial class TypedMockGenerator
 
         indentation_insideMethod.Dispose();
         output.AppendLine("}");
+
+        static void WriteMethodOverloads(MethodWritingContext method, FeatureWritingContext feature)
+        {
+            var normalAndOutParameters = method
+                .Symbol
+                .Parameters
+                .Where(parameter => parameter.RefKind is RefKind.None or RefKind.Out)
+                .ToArray();
+            if (normalAndOutParameters.Length is 0)
+                return;
+
+            void WriteOverload(int overloadNumber)
+            {
+                var symbol = method.Symbol;
+                var output = method.Output;
+                output.AppendLine($"""
+
+                    public {method.SetupVerifyType} {method.Symbol.Name}{method.OverloadSuffix}{method.GenericTypeParameters}(
+                    """);
+                using var indentation = output.Indent();
+
+                for (int i = 0; i < normalAndOutParameters.Length; i++)
+                {
+                    var parameter = normalAndOutParameters[i];
+                    var shouldUseValueIsteadOfPredicate = (1 << i & overloadNumber) == 1 << i;
+                    output.AppendLine(shouldUseValueIsteadOfPredicate ?
+                        parameter.ToDisplayString() :
+                        $"{Predicate(parameter)}? {parameter.Name} = null");
+                    if (i != normalAndOutParameters.Length - 1)
+                        output.AppendIgnoringIndentation(",");
+                }
+
+                output.AppendIgnoringIndentation(")");
+            }
+
+            var overloadCount = Math.Pow(2, normalAndOutParameters.Length) - 1;
+            for (int i = 1; i < overloadCount; i++)
+                WriteOverload(i);
+        }
+
+        WriteMethodOverloads(method, feature);
     }
 
     private static void WriteProperty(PropertyWritingContext property, IndentingStringBuilder output)
