@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Collections.Immutable;
 using System.Globalization;
 
 namespace Moq.Typed;
@@ -10,9 +11,9 @@ internal static partial class TypedMockGenerator
         var output = method.Output;
         output.AppendLine();
         output.AppendLine("#nullable disable warnings");
-        output.AppendLine($"public {(method.AnyRefs ? $"ref struct" : "class")} {method.ParametersContainingType}");
+        output.AppendLine($"public {(method.Parameters.AnyRefs ? $"ref struct" : "class")} {method.ParametersContainingType}");
         output.AppendLine("{");
-        method.ForEachParameterWrite(
+        method.Parameters.ForEachWrite(
             static (parameter, @ref) => $"public{@ref} {parameter.Type} {parameter.Name};",
             false,
             1);
@@ -69,12 +70,12 @@ internal static partial class TypedMockGenerator
                         {
             """);
 
-            method.ForEachParameterWrite(
+            method.Parameters.ForEachWrite(
                 static (parameter, @ref) => $"{parameter.Name} ={@ref} {parameter.Name}",
                 true,
                 4);
 
-            var @ref = method.AnyRefs ? "ref " : null;
+            var @ref = method.Parameters.AnyRefs ? "ref " : null;
             output.AppendLine($$"""
                         };
                         {{(delegates.Return ? "return " : null)}}{{parameterName}}({{@ref}}__parameters__);
@@ -123,7 +124,7 @@ internal static partial class TypedMockGenerator
             }
         }
 
-        if (!method.AnyRefs)
+        if (!method.Parameters.AnyRefs)
             WriteReturnsConvenienceMethods();
 
 
@@ -176,14 +177,14 @@ internal static partial class TypedMockGenerator
             var symbol = delegates.OfMethod;
             output.AppendLine();
             output.AppendLine($"private delegate {delegates.ReturnType} {delegates.InternalType}(");
-            method.ForEachParameterWrite(
+            method.Parameters.ForEachWrite(
                 (parameter, _) => parameter.RefKind is RefKind.Out ? $"{parameter.Type} {parameter.Name}" : parameter.ToDisplayString(),
                 true,
                 1);
             output.AppendIgnoringIndentation(");");
         }
 
-        var @ref = method.AnyRefs ? "ref " : null;
+        var @ref = method.Parameters.AnyRefs ? "ref " : null;
         void WritePublic(MethodWritingContext.Delegates delegates)
         {
             output.AppendLine();
@@ -239,38 +240,44 @@ internal static partial class TypedMockGenerator
     {
         var symbol = method.Symbol;
         var output = method.Output;
+        var methodFullName = $"{method.Symbol.Name}{method.OverloadSuffix}{method.GenericTypeParameters}";
         output.AppendLine($"""
 
-            public {method.SetupVerifyType} {method.Symbol.Name}{method.OverloadSuffix}{method.GenericTypeParameters}(
+            public {method.SetupVerifyType} {methodFullName}(
             """);
 
         var methodParameters = symbol.Parameters;
         static string Predicate(IParameterSymbol parameter) => $"Func<{parameter.Type}, bool>";
-        method.ForEachParameterWrite(
+        method.Parameters.ForEachWrite(
             feature,
             static (parameter, _, feature) => parameter.RefKind switch
             {
-                RefKind.None => $"{Predicate(parameter)}? {parameter.Name} = null",
-                RefKind.Out when feature.HasSetupVerifyType => $"{parameter.Type} {parameter.Name} = default({parameter.Type})!",
+                RefKind.None => $"{Predicate(parameter)} {parameter.Name}",
+                RefKind.Out when feature.HasSetupVerifyType => $"{parameter.Type} {parameter.Name}",
                 _ => string.Empty
             },
             true,
             1);
-        var anyWritten = symbol.Parameters.Any(parameter =>
-            parameter.RefKind is RefKind.None ||
-            (parameter.RefKind is RefKind.Out && feature.HasSetupVerifyType));
-        if (feature.AdditionalMethodPropertyMockingParameter.Text is string additionalParamText)
+
+        void TryWriteSignatureForAdditionalParameter(int atIndentation)
         {
-            if (anyWritten)
-                output.AppendIgnoringIndentation(",");
-            output.AppendLine(additionalParamText, 1);
+            var anyWritten = symbol.Parameters.Any(parameter =>
+                parameter.RefKind is RefKind.None ||
+                (parameter.RefKind is RefKind.Out && feature.HasSetupVerifyType));
+            if (feature.AdditionalMethodPropertyMockingParameter.Text is string additionalParamText)
+            {
+                if (anyWritten)
+                    output.AppendIgnoringIndentation(",");
+                output.AppendLine(additionalParamText, atIndentation);
+            }
         }
+        TryWriteSignatureForAdditionalParameter(1);
         output.AppendIgnoringIndentation(")");
 
         WriteGenericTypeConstraints(symbol, atIndentation: 1, output);
         output.AppendLine("{");
         using var indentation_insideMethod = output.Indent(1);
-        method.ForEachParameterWrite(
+        method.Parameters.ForEachWrite(
             feature,
             static (parameter, method, feature) => parameter.RefKind switch
             {
@@ -286,7 +293,7 @@ internal static partial class TypedMockGenerator
         var local = feature.HasSetupVerifyType ? "var __local__ = " : null;
         output.AppendLine($"{local}mock.{feature.Name}(mock => mock.{method.Symbol.Name}{method.GenericTypeParameters}(");
         using var indentation_insideSetupDelegate = output.Indent(1);
-        method.ForEachParameterWrite(
+        method.Parameters.ForEachWrite(
             static (parameter, method) => parameter.RefKind switch
             {
                 RefKind.None => $"It.Is({parameter.Name}Expression)",
@@ -297,11 +304,15 @@ internal static partial class TypedMockGenerator
             },
             true);
         output.AppendIgnoringIndentation(")");
-        if (feature.AdditionalMethodPropertyMockingParameter.Name is string existing)
+        void TryWriteAdditionalParameterPassing(int atIndentation = 0)
         {
-            output.AppendIgnoringIndentation(",");
-            output.AppendLine(existing);
+            if (feature.AdditionalMethodPropertyMockingParameter.Name is string existing)
+            {
+                output.AppendIgnoringIndentation(",");
+                output.AppendLine(existing, atIndentation);
+            }
         }
+        TryWriteAdditionalParameterPassing();
         output.AppendIgnoringIndentation(");");
         indentation_insideSetupDelegate.Dispose();
         if (method.SetupVerifyTypeConstructorName is not null)
@@ -310,46 +321,115 @@ internal static partial class TypedMockGenerator
         indentation_insideMethod.Dispose();
         output.AppendLine("}");
 
-        static void WriteMethodOverloads(MethodWritingContext method, FeatureWritingContext feature)
-        {
-            var normalAndOutParameters = method
+        var allNormalAndOutParameters = new MethodParametersWritingContext(
+            method
                 .Symbol
                 .Parameters
                 .Where(parameter => parameter.RefKind is RefKind.None or RefKind.Out)
-                .ToArray();
-            if (normalAndOutParameters.Length is 0)
-                return;
+                .ToImmutableArray(),
+            output);
+        if (allNormalAndOutParameters.Symbols.Length is 0)
+            return;
 
-            void WriteOverload(int overloadNumber)
+        void WritePredicateValueOverloads(ImmutableArray<IParameterSymbol> normalAndOutParametersArray)
+        {
+            var normalAndOutParameters = new MethodParametersWritingContext(
+                normalAndOutParametersArray,
+                output);
+            var remainingParameters = new MethodParametersWritingContext(
+                allNormalAndOutParameters
+                    .Symbols
+                    .Except<IParameterSymbol>(normalAndOutParameters.Symbols, SymbolEqualityComparer.Default)
+                    .Where(symbol => feature.HasSetupVerifyType || symbol.RefKind is RefKind.None)
+                    .ToImmutableArray(),
+                output);
+
+            void WritePredicateValueOverload(int overloadNumber)
             {
-                var symbol = method.Symbol;
+                static int PositionOfRightmostSetbit(int n)
+                {
+                    if (n < 1)
+                        return -1;
+
+                    var position = 0;
+                    var m = 1;
+
+                    while ((n & m) == 0)
+                    {
+                        m <<= 1;
+                        position++;
+                    }
+                    return position;
+                }
+
+                var firstParameterIndex = PositionOfRightmostSetbit(overloadNumber);
+                if (firstParameterIndex is not -1 && normalAndOutParameters.Symbols[firstParameterIndex].RefKind is RefKind.Out)
+                    return;
+
                 var output = method.Output;
                 output.AppendLine($"""
 
-                    public {method.SetupVerifyType} {method.Symbol.Name}{method.OverloadSuffix}{method.GenericTypeParameters}(
+                    public {method.SetupVerifyType} {methodFullName}(
                     """);
-                using var indentation = output.Indent();
 
-                for (int i = 0; i < normalAndOutParameters.Length; i++)
-                {
-                    var parameter = normalAndOutParameters[i];
-                    var shouldUseValueIsteadOfPredicate = (1 << i & overloadNumber) == 1 << i;
-                    output.AppendLine(shouldUseValueIsteadOfPredicate ?
-                        parameter.ToDisplayString() :
-                        $"{Predicate(parameter)}? {parameter.Name} = null");
-                    if (i != normalAndOutParameters.Length - 1)
-                        output.AppendIgnoringIndentation(",");
-                }
-
+                Predicate<int> useValueIsteadOfPredicate = (int parameterIndex)
+                    => (1 << parameterIndex & overloadNumber) != 0;
+                normalAndOutParameters.ForEachWrite(
+                    (overloadNumber, useValueIsteadOfPredicate, feature),
+                    static (parameter, _, i, args) => parameter.RefKind switch
+                    {
+                        RefKind.None => args.useValueIsteadOfPredicate(i) ?
+                            $"{parameter.Type} {parameter.Name}" :
+                            $"{Predicate(parameter)} {parameter.Name}",
+                        RefKind.Out when args.feature.HasSetupVerifyType => $"{parameter.Type} {parameter.Name}",
+                        _ => string.Empty
+                    },
+                    comaDelimit: true,
+                    atIndentation: 1);
+                TryWriteSignatureForAdditionalParameter(atIndentation: 1);
                 output.AppendIgnoringIndentation(")");
+
+                output.AppendLine($"=> {methodFullName}(", 1);
+                allNormalAndOutParameters.ForEachWrite(
+                    (useValueIsteadOfPredicate, feature, normalAndOutParameters),
+                    static (parameter, _, i, args) => 
+                    {
+                        var matchI = args.normalAndOutParameters.Symbols.IndexOf(parameter, SymbolEqualityComparer.Default);
+                        if (matchI is -1)
+                            return @parameter.RefKind is RefKind.None ?
+                                $"{parameter.Name}: static _ => true" :
+                                args.feature.HasSetupVerifyType ?
+                                    $"{parameter.Name}: default" :
+                                     string.Empty;
+                        return args.feature.HasSetupVerifyType || parameter.RefKind is not RefKind.Out ?
+                            args.useValueIsteadOfPredicate(matchI) ?
+                                $"{parameter.Name}: __local__ => Equals(__local__, {parameter.Name})" :
+                                $"{parameter.Name}: {parameter.Name}" :
+                            string.Empty;
+                    },
+                    comaDelimit: true,
+                    atIndentation: 2);
+                    
+                TryWriteAdditionalParameterPassing(atIndentation: 2);
+                output.AppendIgnoringIndentation(");");
             }
 
-            var overloadCount = Math.Pow(2, normalAndOutParameters.Length) - 1;
+            if (normalAndOutParametersArray.Length is 0)
+                WritePredicateValueOverload(0);
+            var overloadCount = Math.Pow(2, normalAndOutParameters.Symbols.Length);
             for (int i = 1; i < overloadCount; i++)
-                WriteOverload(i);
+                WritePredicateValueOverload(i);
         }
 
-        WriteMethodOverloads(method, feature);
+        static IEnumerable<ImmutableArray<T>> Combinations<T>(ImmutableArray<T> source)
+            => Enumerable
+            .Range(0, 1 << (source.Length))
+            .Select(index => source
+                .Where((v, i) => (index & (1 << i)) != 0)
+                .ToImmutableArray());
+        var combinations = Combinations(allNormalAndOutParameters.Symbols);
+        foreach (var combination in combinations)
+            WritePredicateValueOverloads(combination);
     }
 
     private static void WriteProperty(PropertyWritingContext property, IndentingStringBuilder output)

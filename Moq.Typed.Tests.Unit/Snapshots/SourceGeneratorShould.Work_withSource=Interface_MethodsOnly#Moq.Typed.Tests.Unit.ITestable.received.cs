@@ -196,7 +196,7 @@ namespace Moq.Typed.Tests.Unit
         }
 
         public SecondSetup Second(
-            Func<IEnumerable<int>, bool>? someInts = null)
+            Func<IEnumerable<int>, bool> someInts)
         {
             someInts ??= static _ => true;
             Expression<Func<IEnumerable<int>, bool>> someIntsExpression = argument => someInts(argument);
@@ -204,6 +204,11 @@ namespace Moq.Typed.Tests.Unit
                 It.Is(someIntsExpression)));
             return new SecondSetup(__local__);
         }
+
+        public SecondSetup Second(
+            IEnumerable<int> someInts)
+            => Second(
+                someInts: __local__ => Equals(__local__, someInts));
 
         #nullable disable warnings
         public class ThirdParameters
@@ -289,9 +294,9 @@ namespace Moq.Typed.Tests.Unit
         }
 
         public ThirdSetup Third(
-            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>? someParameters = null, 
-            Func<Moq.Typed.Tests.Unit.Parameter, bool>? oneMoreParameter = null, 
-            Func<int, bool>? someInt = null)
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            Func<int, bool> someInt)
         {
             someParameters ??= static _ => true;
             Expression<Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>> someParametersExpression = argument => someParameters(argument);
@@ -307,34 +312,160 @@ namespace Moq.Typed.Tests.Unit
         }
 
         public ThirdSetup Third(
-            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters,
-            Func<Moq.Typed.Tests.Unit.Parameter, bool>? oneMoreParameter = null,
-            Func<int, bool>? someInt = null)
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: static _ => true, 
+                someInt: static _ => true);
 
         public ThirdSetup Third(
-            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>? someParameters = null,
-            Moq.Typed.Tests.Unit.Parameter oneMoreParameter,
-            Func<int, bool>? someInt = null)
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: static _ => true);
 
         public ThirdSetup Third(
-            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters,
-            Moq.Typed.Tests.Unit.Parameter oneMoreParameter,
-            Func<int, bool>? someInt = null)
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: static _ => true);
 
         public ThirdSetup Third(
-            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>? someParameters = null,
-            Func<Moq.Typed.Tests.Unit.Parameter, bool>? oneMoreParameter = null,
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: static _ => true);
+
+        public ThirdSetup Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: static _ => true);
+
+        public ThirdSetup Third(
             int someInt)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: static _ => true, 
+                someInt: __local__ => Equals(__local__, someInt));
 
         public ThirdSetup Third(
-            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters,
-            Func<Moq.Typed.Tests.Unit.Parameter, bool>? oneMoreParameter = null,
-            int someInt)
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Func<int, bool> someInt)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: static _ => true, 
+                someInt: someInt);
 
         public ThirdSetup Third(
-            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>? someParameters = null,
-            Moq.Typed.Tests.Unit.Parameter oneMoreParameter,
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
             int someInt)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: static _ => true, 
+                someInt: __local__ => Equals(__local__, someInt));
+
+        public ThirdSetup Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            int someInt)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: static _ => true, 
+                someInt: __local__ => Equals(__local__, someInt));
+
+        public ThirdSetup Third(
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            Func<int, bool> someInt)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: someInt);
+
+        public ThirdSetup Third(
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            int someInt)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: __local__ => Equals(__local__, someInt));
+
+        public ThirdSetup Third(
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            int someInt)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: __local__ => Equals(__local__, someInt));
+
+        public ThirdSetup Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            Func<int, bool> someInt)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: someInt);
+
+        public ThirdSetup Third(
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            Func<int, bool> someInt)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: someInt);
+
+        public ThirdSetup Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            Func<int, bool> someInt)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: someInt);
+
+        public ThirdSetup Third(
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            int someInt)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: __local__ => Equals(__local__, someInt));
+
+        public ThirdSetup Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            int someInt)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: __local__ => Equals(__local__, someInt));
+
+        public ThirdSetup Third(
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            int someInt)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: __local__ => Equals(__local__, someInt));
+
+        public ThirdSetup Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            int someInt)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: __local__ => Equals(__local__, someInt));
     }
 
     [GeneratedCode("Moq.Typed", null)]
@@ -362,7 +493,7 @@ namespace Moq.Typed.Tests.Unit
         }
 
         public void Second(
-            Func<IEnumerable<int>, bool>? someInts = null,
+            Func<IEnumerable<int>, bool> someInts,
             Times times = default(Times)!)
         {
             someInts ??= static _ => true;
@@ -372,10 +503,17 @@ namespace Moq.Typed.Tests.Unit
                 times);
         }
 
+        public void Second(
+            IEnumerable<int> someInts,
+            Times times = default(Times)!)
+            => Second(
+                someInts: __local__ => Equals(__local__, someInts),
+                times);
+
         public void Third(
-            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>? someParameters = null, 
-            Func<Moq.Typed.Tests.Unit.Parameter, bool>? oneMoreParameter = null, 
-            Func<int, bool>? someInt = null,
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            Func<int, bool> someInt,
             Times times = default(Times)!)
         {
             someParameters ??= static _ => true;
@@ -393,32 +531,196 @@ namespace Moq.Typed.Tests.Unit
 
         public void Third(
             IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters,
-            Func<Moq.Typed.Tests.Unit.Parameter, bool>? oneMoreParameter = null,
-            Func<int, bool>? someInt = null)
+            Times times = default(Times)!)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: static _ => true, 
+                someInt: static _ => true,
+                times);
 
         public void Third(
-            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>? someParameters = null,
             Moq.Typed.Tests.Unit.Parameter oneMoreParameter,
-            Func<int, bool>? someInt = null)
+            Times times = default(Times)!)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: static _ => true,
+                times);
 
         public void Third(
-            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters,
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: static _ => true,
+                times);
+
+        public void Third(
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
             Moq.Typed.Tests.Unit.Parameter oneMoreParameter,
-            Func<int, bool>? someInt = null)
+            Times times = default(Times)!)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: static _ => true,
+                times);
 
         public void Third(
-            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>? someParameters = null,
-            Func<Moq.Typed.Tests.Unit.Parameter, bool>? oneMoreParameter = null,
-            int someInt)
-
-        public void Third(
-            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters,
-            Func<Moq.Typed.Tests.Unit.Parameter, bool>? oneMoreParameter = null,
-            int someInt)
-
-        public void Third(
-            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool>? someParameters = null,
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
             Moq.Typed.Tests.Unit.Parameter oneMoreParameter,
-            int someInt)
+            Times times = default(Times)!)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: static _ => true,
+                times);
+
+        public void Third(
+            int someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: static _ => true, 
+                someInt: __local__ => Equals(__local__, someInt),
+                times);
+
+        public void Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Func<int, bool> someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: static _ => true, 
+                someInt: someInt,
+                times);
+
+        public void Third(
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            int someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: static _ => true, 
+                someInt: __local__ => Equals(__local__, someInt),
+                times);
+
+        public void Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            int someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: static _ => true, 
+                someInt: __local__ => Equals(__local__, someInt),
+                times);
+
+        public void Third(
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            Func<int, bool> someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: someInt,
+                times);
+
+        public void Third(
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            int someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: __local__ => Equals(__local__, someInt),
+                times);
+
+        public void Third(
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            int someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: static _ => true, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: __local__ => Equals(__local__, someInt),
+                times);
+
+        public void Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            Func<int, bool> someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: someInt,
+                times);
+
+        public void Third(
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            Func<int, bool> someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: someInt,
+                times);
+
+        public void Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            Func<int, bool> someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: someInt,
+                times);
+
+        public void Third(
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            int someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: __local__ => Equals(__local__, someInt),
+                times);
+
+        public void Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
+            int someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: oneMoreParameter, 
+                someInt: __local__ => Equals(__local__, someInt),
+                times);
+
+        public void Third(
+            Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            int someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: someParameters, 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: __local__ => Equals(__local__, someInt),
+                times);
+
+        public void Third(
+            IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
+            Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
+            int someInt,
+            Times times = default(Times)!)
+            => Third(
+                someParameters: __local__ => Equals(__local__, someParameters), 
+                oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
+                someInt: __local__ => Equals(__local__, someInt),
+                times);
     }
 }

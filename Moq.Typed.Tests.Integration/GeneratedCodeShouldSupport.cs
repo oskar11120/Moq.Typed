@@ -7,6 +7,20 @@ namespace Moq.Typed.Tests.Integration;
 
 public class GeneratedCodeShouldSupport
 {
+    public interface IWithManyParameters 
+    {
+        int Excecute(int number, string text, bool flag);
+    }
+
+    [Test]
+    public void ManyParameters()
+    {
+        var mock = new Mock<IWithManyParameters>();
+        mock
+            .Setup()
+            .Excecute();
+    }
+
     public interface IWithRef
     {
         int Execute(ref int number);

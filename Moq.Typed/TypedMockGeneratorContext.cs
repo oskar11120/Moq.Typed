@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System.Collections.Immutable;
 using System.Text;
 
 namespace Moq.Typed;
@@ -6,6 +7,10 @@ namespace Moq.Typed;
 internal static partial class TypedMockGenerator
 {
     private const string generatedCodeAttribute = "[GeneratedCode(\"Moq.Typed\", null)]";
+    private const string comma = ", ";
+
+    private static string Comma(int i, int length) => i < length - 1 ? comma : string.Empty;
+
     private sealed class TypeInfo
     {
         public TypeInfo(INamedTypeSymbol symbol)
@@ -52,6 +57,47 @@ internal static partial class TypedMockGenerator
         public readonly FeatureWritingContext Feature = feature;
     }
 
+    private readonly struct MethodParametersWritingContext
+    {
+        public MethodParametersWritingContext(ImmutableArray<IParameterSymbol> symbols, IndentingStringBuilder output)
+        {
+            Symbols = symbols;
+            Output = output;
+
+            AnyRefs = Symbols.Any(IsRef);
+        }
+
+        public readonly ImmutableArray<IParameterSymbol> Symbols;
+        public readonly IndentingStringBuilder Output;
+
+        public readonly bool AnyRefs;
+
+        private static bool IsRef(IParameterSymbol parameter) => parameter.RefKind is RefKind.Ref;
+
+        public delegate string GetText<TArgs>(IParameterSymbol symbol, string? @refPrefix, int index, TArgs args);
+        public void ForEachWrite<TArgs>(TArgs arguments, GetText<TArgs> getText, bool comaDelimit, int atIndentation = 0)
+        {
+            using var indentation = Output.Indent(atIndentation);
+            for (int i = 0; i < Symbols.Length; i++)
+            {
+                var parameter = Symbols[i];
+                var @ref = IsRef(parameter) ? " ref" : null;
+                var text = getText(parameter, @ref, i, arguments);
+                Output.AppendLine(text);
+                if (comaDelimit && text.Length is not 0)
+                    Output.AppendIgnoringIndentation(Comma(i, Symbols.Length));
+            }
+        }
+
+        public delegate string GetText1<TArgs>(IParameterSymbol symbol, string? @refPrefix, TArgs args);
+        public void ForEachWrite<TArgs>(TArgs arguments, GetText1<TArgs> getText, bool comaDelimit, int atIndentation = 0)
+            => ForEachWrite((arguments, getText), static (symbol, @ref, _, arguments) => arguments.getText(symbol, @ref, arguments.arguments), comaDelimit, atIndentation);
+
+        public delegate string GetText(IParameterSymbol symbol, string? @refPrefix);
+        public void ForEachWrite(GetText getText, bool comaDelimit, int atIndentation = 0)
+            => ForEachWrite(getText, static (symbol, @ref, _, getText) => getText(symbol, @ref), comaDelimit, atIndentation);
+    }
+
     private readonly struct MethodWritingContext
     {
         public readonly record struct Delegates(
@@ -77,9 +123,9 @@ internal static partial class TypedMockGenerator
             OverloadSuffix = overloadSuffix;
             Feature = feature;
 
+            Parameters = new(symbol.Parameters, output);
             GenericTypeParameters = GetGenericTypeParameters();
             ParametersContainingType = Symbol.Name + "Parameters" + OverloadSuffix + GenericTypeParameters;
-            AnyRefs = symbol.Parameters.Any(IsRef);
 
             string ApplyConflctResolutionSuffix(string newTypeParameter, int i = 0)
                 => symbol.TypeParameters.Any(existing => existing.Name == newTypeParameter) ?
@@ -102,10 +148,10 @@ internal static partial class TypedMockGenerator
         public readonly string ParametersContainingType;
         public readonly string? SetupVerifyTypeConstructorName;
         public readonly string SetupVerifyType;
+        public readonly MethodParametersWritingContext Parameters;
         public readonly Delegates CallbackDelegates;
         public readonly Delegates ExceptionFunctionDelegates;
         public readonly Delegates ValueFunctionDelegates;
-        public readonly bool AnyRefs;
 
         public void ForEachDelegate(Action<Delegates> action)
         {
@@ -114,26 +160,6 @@ internal static partial class TypedMockGenerator
                 action(ValueFunctionDelegates);
             action(ExceptionFunctionDelegates);
         }
-
-        public delegate string GetText<TArgs>(IParameterSymbol symbol, string? @refPrefix, TArgs args);
-        public void ForEachParameterWrite<TArgs>(TArgs arguments, GetText<TArgs> getText, bool comaDelimit, int atIndentation = 0)
-        {
-            var parameters = Symbol.Parameters;
-            using var indentation = Output.Indent(atIndentation);
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                var parameter = parameters[i];
-                var @ref = IsRef(parameter) ? " ref" : null;
-                var text = getText(parameter, @ref, arguments);
-                Output.AppendLine(text);
-                if (comaDelimit && text.Length is not 0)
-                    Output.AppendIgnoringIndentation(Comma(i, parameters.Length));
-            }
-        }
-
-        public delegate string GetText(IParameterSymbol symbol, string? @refPrefix);
-        public void ForEachParameterWrite(GetText getText, bool comaDelimit, int atIndentation = 0)
-            => ForEachParameterWrite(getText, static (symbol, @ref, getText) => getText(symbol, @ref), comaDelimit, atIndentation);
 
         private Delegates GetDelegates(string kind, string genericTypeParameters, bool @return, string returnType) =>
             new(Symbol.MetadataName + kind + OverloadSuffix + genericTypeParameters, @return, returnType, Symbol);
@@ -161,10 +187,6 @@ internal static partial class TypedMockGenerator
             output.Append(">");
             return output.ToString();
         }
-
-        private const string comma = ", ";
-        private static bool IsRef(IParameterSymbol parameter) => parameter.RefKind is RefKind.Ref;
-        private static string Comma(int i, int length) => i < length - 1 ? comma : string.Empty;
     }
 
     private readonly struct OverloadCounter
