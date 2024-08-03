@@ -41,16 +41,16 @@ namespace Moq.Typed.Tests.Unit
 
     public delegate TException TypedMockSetupFor_ITestable_FirstExceptionFunction<TException>(TypedMockSetupFor_ITestable_FirstParameters parameters);
 
-    public class FirstSetup
+    public class TypedMockSetupFor_ITestable_FirstSetup
     {
         private readonly ISetup<Moq.Typed.Tests.Unit.ITestable> setup;
 
-        public FirstSetup(ISetup<Moq.Typed.Tests.Unit.ITestable> setup)
+        public TypedMockSetupFor_ITestable_FirstSetup(ISetup<Moq.Typed.Tests.Unit.ITestable> setup)
         {
             this.setup = setup;
         }
 
-        public FirstSetup Callback(TypedMockSetupFor_ITestable_FirstCallback callback)
+        public TypedMockSetupFor_ITestable_FirstSetup Callback(TypedMockSetupFor_ITestable_FirstCallback callback)
         {
             setup.Callback(new InternalTypedMockSetupFor_ITestable_FirstCallback(
                 () => 
@@ -63,7 +63,7 @@ namespace Moq.Typed.Tests.Unit
             return this;
         }
 
-        public FirstSetup Throws<TException>(TypedMockSetupFor_ITestable_FirstExceptionFunction<TException> exceptionFunction) where TException : Exception
+        public TypedMockSetupFor_ITestable_FirstSetup Throws<TException>(TypedMockSetupFor_ITestable_FirstExceptionFunction<TException> exceptionFunction) where TException : Exception
         {
             setup.Throws(new InternalTypedMockSetupFor_ITestable_FirstExceptionFunction<TException>(
                 () => 
@@ -76,29 +76,29 @@ namespace Moq.Typed.Tests.Unit
             return this;
         }
 
-        public FirstSetup Throws(Exception exception)
+        public TypedMockSetupFor_ITestable_FirstSetup Throws(Exception exception)
         {
             setup.Throws(exception);
             return this;
         }
 
-        public FirstSetup Throws<TException>() where TException : Exception, new()
+        public TypedMockSetupFor_ITestable_FirstSetup Throws<TException>() where TException : Exception, new()
         {
             setup.Throws<TException>();
             return this;
         }
 
-        public FirstSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+        public TypedMockSetupFor_ITestable_FirstSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
         {
             setup.Throws<TException>(exceptionFunction);
             return this;
         }
     }
 
-    public FirstSetup First()
+    public TypedMockSetupFor_ITestable_FirstSetup First()
     {
         var __local__ = mock.Setup(mock => mock.First());
-        return new FirstSetup(__local__);
+        return new TypedMockSetupFor_ITestable_FirstSetup(__local__);
     }
 
     #nullable disable warnings
@@ -123,16 +123,16 @@ namespace Moq.Typed.Tests.Unit
 
     public delegate TException TypedMockSetupFor_ITestable_SecondExceptionFunction<TException>(TypedMockSetupFor_ITestable_SecondParameters parameters);
 
-    public class SecondSetup
+    public class TypedMockSetupFor_ITestable_SecondSetup
     {
         private readonly ISetup<Moq.Typed.Tests.Unit.ITestable, int> setup;
 
-        public SecondSetup(ISetup<Moq.Typed.Tests.Unit.ITestable, int> setup)
+        public TypedMockSetupFor_ITestable_SecondSetup(ISetup<Moq.Typed.Tests.Unit.ITestable, int> setup)
         {
             this.setup = setup;
         }
 
-        public SecondSetup Callback(TypedMockSetupFor_ITestable_SecondCallback callback)
+        public TypedMockSetupFor_ITestable_SecondSetup Callback(TypedMockSetupFor_ITestable_SecondCallback callback)
         {
             setup.Callback(new InternalTypedMockSetupFor_ITestable_SecondCallback(
                 (IEnumerable<int> someInts) => 
@@ -146,7 +146,7 @@ namespace Moq.Typed.Tests.Unit
             return this;
         }
 
-        public SecondSetup Returns(TypedMockSetupFor_ITestable_SecondValueFunction valueFunction)
+        public TypedMockSetupFor_ITestable_SecondSetup Returns(TypedMockSetupFor_ITestable_SecondValueFunction valueFunction)
         {
             setup.Returns(new InternalTypedMockSetupFor_ITestable_SecondValueFunction(
                 (IEnumerable<int> someInts) => 
@@ -160,10 +160,10 @@ namespace Moq.Typed.Tests.Unit
             return this;
         }
 
-        public SecondSetup Returns(int value)
+        public TypedMockSetupFor_ITestable_SecondSetup Returns(int value)
             => Returns(_ => value);
 
-        public SecondSetup Throws<TException>(TypedMockSetupFor_ITestable_SecondExceptionFunction<TException> exceptionFunction) where TException : Exception
+        public TypedMockSetupFor_ITestable_SecondSetup Throws<TException>(TypedMockSetupFor_ITestable_SecondExceptionFunction<TException> exceptionFunction) where TException : Exception
         {
             setup.Throws(new InternalTypedMockSetupFor_ITestable_SecondExceptionFunction<TException>(
                 (IEnumerable<int> someInts) => 
@@ -177,40 +177,40 @@ namespace Moq.Typed.Tests.Unit
             return this;
         }
 
-        public SecondSetup Throws(Exception exception)
+        public TypedMockSetupFor_ITestable_SecondSetup Throws(Exception exception)
         {
             setup.Throws(exception);
             return this;
         }
 
-        public SecondSetup Throws<TException>() where TException : Exception, new()
+        public TypedMockSetupFor_ITestable_SecondSetup Throws<TException>() where TException : Exception, new()
         {
             setup.Throws<TException>();
             return this;
         }
 
-        public SecondSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+        public TypedMockSetupFor_ITestable_SecondSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
         {
             setup.Throws<TException>(exceptionFunction);
             return this;
         }
     }
 
-    public SecondSetup Second(
+    public TypedMockSetupFor_ITestable_SecondSetup Second(
         Func<IEnumerable<int>, bool> someInts)
     {
         someInts ??= static _ => true;
         Expression<Func<IEnumerable<int>, bool>> someIntsExpression = argument => someInts(argument);
         var __local__ = mock.Setup(mock => mock.Second(
             It.Is(someIntsExpression)));
-        return new SecondSetup(__local__);
+        return new TypedMockSetupFor_ITestable_SecondSetup(__local__);
     }
 
-    public SecondSetup Second()
+    public TypedMockSetupFor_ITestable_SecondSetup Second()
         => Second(
             someInts: static _ => true);
 
-    public SecondSetup Second(
+    public TypedMockSetupFor_ITestable_SecondSetup Second(
         IEnumerable<int> someInts)
         => Second(
             someInts: __local__ => Equals(__local__, someInts));
@@ -238,16 +238,16 @@ namespace Moq.Typed.Tests.Unit
 
     public delegate TException TypedMockSetupFor_ITestable_ThirdExceptionFunction<TException>(TypedMockSetupFor_ITestable_ThirdParameters parameters);
 
-    public class ThirdSetup
+    public class TypedMockSetupFor_ITestable_ThirdSetup
     {
         private readonly ISetup<Moq.Typed.Tests.Unit.ITestable> setup;
 
-        public ThirdSetup(ISetup<Moq.Typed.Tests.Unit.ITestable> setup)
+        public TypedMockSetupFor_ITestable_ThirdSetup(ISetup<Moq.Typed.Tests.Unit.ITestable> setup)
         {
             this.setup = setup;
         }
 
-        public ThirdSetup Callback(TypedMockSetupFor_ITestable_ThirdCallback callback)
+        public TypedMockSetupFor_ITestable_ThirdSetup Callback(TypedMockSetupFor_ITestable_ThirdCallback callback)
         {
             setup.Callback(new InternalTypedMockSetupFor_ITestable_ThirdCallback(
                 (IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, Moq.Typed.Tests.Unit.Parameter oneMoreParameter, int someInt) => 
@@ -263,7 +263,7 @@ namespace Moq.Typed.Tests.Unit
             return this;
         }
 
-        public ThirdSetup Throws<TException>(TypedMockSetupFor_ITestable_ThirdExceptionFunction<TException> exceptionFunction) where TException : Exception
+        public TypedMockSetupFor_ITestable_ThirdSetup Throws<TException>(TypedMockSetupFor_ITestable_ThirdExceptionFunction<TException> exceptionFunction) where TException : Exception
         {
             setup.Throws(new InternalTypedMockSetupFor_ITestable_ThirdExceptionFunction<TException>(
                 (IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, Moq.Typed.Tests.Unit.Parameter oneMoreParameter, int someInt) => 
@@ -279,26 +279,26 @@ namespace Moq.Typed.Tests.Unit
             return this;
         }
 
-        public ThirdSetup Throws(Exception exception)
+        public TypedMockSetupFor_ITestable_ThirdSetup Throws(Exception exception)
         {
             setup.Throws(exception);
             return this;
         }
 
-        public ThirdSetup Throws<TException>() where TException : Exception, new()
+        public TypedMockSetupFor_ITestable_ThirdSetup Throws<TException>() where TException : Exception, new()
         {
             setup.Throws<TException>();
             return this;
         }
 
-        public ThirdSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
+        public TypedMockSetupFor_ITestable_ThirdSetup Throws<TException>(Func<TException> exceptionFunction) where TException : Exception, new()
         {
             setup.Throws<TException>(exceptionFunction);
             return this;
         }
     }
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
         Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
         Func<int, bool> someInt)
@@ -313,30 +313,30 @@ namespace Moq.Typed.Tests.Unit
             It.Is(someParametersExpression), 
             It.Is(oneMoreParameterExpression), 
             It.Is(someIntExpression)));
-        return new ThirdSetup(__local__);
+        return new TypedMockSetupFor_ITestable_ThirdSetup(__local__);
     }
 
-    public ThirdSetup Third()
+    public TypedMockSetupFor_ITestable_ThirdSetup Third()
         => Third(
             someParameters: static _ => true, 
             oneMoreParameter: static _ => true, 
             someInt: static _ => true);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters)
         => Third(
             someParameters: __local__ => Equals(__local__, someParameters), 
             oneMoreParameter: static _ => true, 
             someInt: static _ => true);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Moq.Typed.Tests.Unit.Parameter oneMoreParameter)
         => Third(
             someParameters: static _ => true, 
             oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
             someInt: static _ => true);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
         Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter)
         => Third(
@@ -344,7 +344,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: oneMoreParameter, 
             someInt: static _ => true);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
         Moq.Typed.Tests.Unit.Parameter oneMoreParameter)
         => Third(
@@ -352,7 +352,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
             someInt: static _ => true);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
         Moq.Typed.Tests.Unit.Parameter oneMoreParameter)
         => Third(
@@ -360,14 +360,14 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
             someInt: static _ => true);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         int someInt)
         => Third(
             someParameters: static _ => true, 
             oneMoreParameter: static _ => true, 
             someInt: __local__ => Equals(__local__, someInt));
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
         Func<int, bool> someInt)
         => Third(
@@ -375,7 +375,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: static _ => true, 
             someInt: someInt);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
         int someInt)
         => Third(
@@ -383,7 +383,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: static _ => true, 
             someInt: __local__ => Equals(__local__, someInt));
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
         int someInt)
         => Third(
@@ -391,7 +391,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: static _ => true, 
             someInt: __local__ => Equals(__local__, someInt));
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
         Func<int, bool> someInt)
         => Third(
@@ -399,7 +399,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
             someInt: someInt);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
         int someInt)
         => Third(
@@ -407,7 +407,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: oneMoreParameter, 
             someInt: __local__ => Equals(__local__, someInt));
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
         int someInt)
         => Third(
@@ -415,7 +415,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
             someInt: __local__ => Equals(__local__, someInt));
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
         Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
         Func<int, bool> someInt)
@@ -424,7 +424,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: oneMoreParameter, 
             someInt: someInt);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
         Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
         Func<int, bool> someInt)
@@ -433,7 +433,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
             someInt: someInt);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
         Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
         Func<int, bool> someInt)
@@ -442,7 +442,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
             someInt: someInt);
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
         Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
         int someInt)
@@ -451,7 +451,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: oneMoreParameter, 
             someInt: __local__ => Equals(__local__, someInt));
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
         Func<Moq.Typed.Tests.Unit.Parameter, bool> oneMoreParameter, 
         int someInt)
@@ -460,7 +460,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: oneMoreParameter, 
             someInt: __local__ => Equals(__local__, someInt));
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         Func<IEnumerable<Moq.Typed.Tests.Unit.Parameter>, bool> someParameters, 
         Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
         int someInt)
@@ -469,7 +469,7 @@ namespace Moq.Typed.Tests.Unit
             oneMoreParameter: __local__ => Equals(__local__, oneMoreParameter), 
             someInt: __local__ => Equals(__local__, someInt));
 
-    public ThirdSetup Third(
+    public TypedMockSetupFor_ITestable_ThirdSetup Third(
         IEnumerable<Moq.Typed.Tests.Unit.Parameter> someParameters, 
         Moq.Typed.Tests.Unit.Parameter oneMoreParameter, 
         int someInt)
