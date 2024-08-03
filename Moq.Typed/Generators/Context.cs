@@ -139,7 +139,7 @@ internal static partial class TypedMockGenerator
             SetupVerifyType = "void";
             if (feature.HasSetupVerifyType)
             {
-                SetupVerifyTypeConstructorName = Symbol.Name + Feature.Name + OverloadSuffix;
+                SetupVerifyTypeConstructorName = feature.TypeName + "_" + Symbol.Name + Feature.Name + OverloadSuffix;
                 SetupVerifyType = SetupVerifyTypeConstructorName + GenericTypeParameters;
             }
         }
