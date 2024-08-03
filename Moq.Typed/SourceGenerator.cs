@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Moq.Typed.Generators;
 
 namespace Moq.Typed;
 
@@ -32,7 +33,7 @@ public sealed class SourceGenerator : IIncrementalGenerator
     {
         var argument = mockGetCall.ArgumentList.Arguments[0].Expression;
         return context.SemanticModel.GetTypeInfo(argument).Type as INamedTypeSymbol;
-    }   
+    }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

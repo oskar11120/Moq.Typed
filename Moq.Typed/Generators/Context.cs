@@ -2,7 +2,7 @@
 using System.Collections.Immutable;
 using System.Text;
 
-namespace Moq.Typed;
+namespace Moq.Typed.Generators;
 
 internal static partial class TypedMockGenerator
 {

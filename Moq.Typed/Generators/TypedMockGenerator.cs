@@ -2,24 +2,11 @@
 using System.Collections.Immutable;
 using System.Globalization;
 
-namespace Moq.Typed;
+namespace Moq.Typed.Generators;
 
 internal static partial class TypedMockGenerator
 {
-    private static void WriteParametersContainerType(MethodWritingContext method)
-    {
-        var output = method.Output;
-        output.AppendLine();
-        output.AppendLine("#nullable disable warnings");
-        output.AppendLine($"public {(method.Parameters.AnyRefs ? $"ref struct" : "class")} {method.ParametersContainingType}");
-        output.AppendLine("{");
-        method.Parameters.ForEachWrite(
-            static (parameter, @ref) => $"public{@ref} {parameter.Type} {parameter.Name};",
-            false,
-            1);
-        output.AppendLine("}");
-        output.AppendLine("#nullable enable warnings");
-    }
+
 
     private static void WriteSetupType(MethodWritingContext method)
     {
@@ -167,34 +154,6 @@ internal static partial class TypedMockGenerator
 
         indentation_insideClass.Dispose();
         output.AppendLine("}");
-    }
-
-    private static void WriteDelegates(MethodWritingContext method)
-    {
-        var output = method.Output;
-        void WriteInternal(MethodWritingContext.Delegates delegates)
-        {
-            var symbol = delegates.OfMethod;
-            output.AppendLine();
-            output.AppendLine($"private delegate {delegates.ReturnType} {delegates.InternalType}(");
-            method.Parameters.ForEachWrite(
-                (parameter, _) => parameter.RefKind is RefKind.Out ? $"{parameter.Type} {parameter.Name}" : parameter.ToDisplayString(),
-                true,
-                1);
-            output.AppendIgnoringIndentation(");");
-        }
-
-        var @ref = method.Parameters.AnyRefs ? "ref " : null;
-        void WritePublic(MethodWritingContext.Delegates delegates)
-        {
-            output.AppendLine();
-            output.AppendLine(
-                $"public delegate {delegates.ReturnType} {delegates.PublicType}(" +
-                $"{@ref}{method.ParametersContainingType} parameters);");
-        }
-
-        method.ForEachDelegate(WriteInternal);
-        method.ForEachDelegate(WritePublic);
     }
 
     private static void WriteGenericTypeConstraints(IMethodSymbol method, int atIndentation, IndentingStringBuilder output)
@@ -449,23 +408,11 @@ internal static partial class TypedMockGenerator
             """);
     }
 
-    private static void WriteExtension(FeatureWritingContext feature, IndentingStringBuilder output)
-    {
-        var type = feature.Type;
-        output.AppendLine($$"""
 
-            {{generatedCodeAttribute}}
-            internal static class TypedMock{{feature.Name}}ExtensionFor_{{type.ShortName}}
-            {
-                public static {{feature.TypeName}} {{feature.ExtensionName}}(this {{type.MockName}} mock)
-                    => new {{feature.TypeName}}(mock);
-            }
-            """);
-    }
 
     private static void WriteFeature(FeatureWritingContext feature, IndentingStringBuilder output)
     {
-        WriteExtension(feature, output);
+        WriteMockProviderExtension(feature, output);
         var type = feature.Type;
         output.AppendLine($$"""
 
@@ -497,8 +444,8 @@ internal static partial class TypedMockGenerator
                 var method = new MethodWritingContext(methodSymbol, OverloadSuffix(overloadNumber), feature, output);
                 if (feature.HasSetupVerifyType)
                 {
-                    WriteParametersContainerType(method);
-                    WriteDelegates(method);
+                    WriteParametersContainer(method);
+                    WriteMethodDelegates(method);
                     WriteSetupType(method);
                 }
                 WriteMethod(method, feature);
