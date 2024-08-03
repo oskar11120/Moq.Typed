@@ -413,20 +413,8 @@ internal static partial class TypedMockGenerator
     private static void WriteFeature(FeatureWritingContext feature, IndentingStringBuilder output)
     {
         WriteMethodProviderGetExtension(feature, output);
+        WriteMethodProvider(feature, output);
         var type = feature.Type;
-        output.AppendLine($$"""
-
-            {{generatedCodeAttribute}}
-            internal sealed class {{feature.TypeName}}
-            {
-                private readonly {{type.MockName}} mock;
-            
-                public {{feature.TypeName}}({{type.MockName}} mock)
-                {
-                    this.mock = mock;
-                }
-            """);
-
         var mockableMembers = type
             .Symbol
             .GetMembers()
@@ -436,7 +424,6 @@ internal static partial class TypedMockGenerator
                 && member is not IMethodSymbol { MethodKind: MethodKind.PropertyGet or MethodKind.PropertySet });
         var overloadCounts = new OverloadCounter();
 
-        using var indentation = output.Indent();
         foreach (var member in mockableMembers)
             if (member is IMethodSymbol methodSymbol)
             {
@@ -459,8 +446,6 @@ internal static partial class TypedMockGenerator
             }
             else
                 throw new NotSupportedException($"Unsupported member {member}.");
-        indentation.Dispose();
-        output.AppendLine("}");
     }
 
     private static string OverloadSuffix(int overloadNumber)

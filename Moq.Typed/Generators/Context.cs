@@ -125,7 +125,7 @@ internal static partial class TypedMockGenerator
 
             Parameters = new(symbol.Parameters, output);
             GenericTypeParameters = GetGenericTypeParameters();
-            ParametersContainingType = Symbol.Name + "Parameters" + OverloadSuffix + GenericTypeParameters;
+            ParametersContainingType = feature.TypeName + "_" + Symbol.Name + "Parameters" + OverloadSuffix + GenericTypeParameters;
 
             string ApplyConflctResolutionSuffix(string newTypeParameter, int i = 0)
                 => symbol.TypeParameters.Any(existing => existing.Name == newTypeParameter) ?
@@ -162,7 +162,7 @@ internal static partial class TypedMockGenerator
         }
 
         private Delegates GetDelegates(string kind, string genericTypeParameters, bool @return, string returnType) =>
-            new(Symbol.MetadataName + kind + OverloadSuffix + genericTypeParameters, @return, returnType, Symbol);
+            new(Feature.TypeName + "_" + Symbol.MetadataName + kind + OverloadSuffix + genericTypeParameters, @return, returnType, Symbol);
 
         private string GetGenericTypeParameters(string? withAdditionalParameter = null)
         {
