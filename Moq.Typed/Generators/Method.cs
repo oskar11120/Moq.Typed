@@ -1,19 +1,31 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
+using System.Globalization;
 
 namespace Moq.Typed.Generators;
 internal static partial class TypedMockGenerator
 {
     private static void WriteMethod(MethodWritingContext method, FeatureWritingContext feature)
     {
-        void WriteMethodForPamameterCombination(MethodParametersWritingContext parameters)
+        void WriteForPamameterCombination(MethodParametersWritingContext parameters, int combinationIndex)
         {
             var symbol = method.Symbol;
             var output = method.Output;
+
+            var combinationNumberText = combinationIndex is 0 ? 
+                string.Empty : combinationIndex.ToString(CultureInfo.InvariantCulture);
+            output.AppendLine($$"""
+
+            public static class {{feature.TypeName}}_{{method.Symbol.Name}}{{method.OverloadSuffix}}Extension{{combinationNumberText}}
+            {
+            """);
+
+            using var indentation_insideClass = output.Indent();
+
             var methodFullName = $"{method.Symbol.Name}{method.OverloadSuffix}{method.GenericTypeParameters}";
             output.AppendLine($"""
-
             public {method.SetupVerifyType} {methodFullName}(
+                this {feature.TypeName} __self__,
             """);
 
             static string Predicate(IParameterSymbol parameter) => $"Func<{parameter.Type}, bool>";
@@ -60,7 +72,7 @@ internal static partial class TypedMockGenerator
                 false);
 
             var local = feature.HasSetupVerifyType ? "var __local__ = " : null;
-            output.AppendLine($"{local}mock.{feature.Name}(mock => mock.{method.Symbol.Name}{method.GenericTypeParameters}(");
+            output.AppendLine($"{local}__self__.Mock.{feature.Name}(mock => mock.{method.Symbol.Name}{method.GenericTypeParameters}(");
             using var indentation_insideSetupDelegate = output.Indent(1);
             parameters.ForEachWrite(
                 static (parameter, method) => parameter.RefKind switch
@@ -89,6 +101,8 @@ internal static partial class TypedMockGenerator
 
             indentation_insideMethod.Dispose();
             output.AppendLine("}");
+            indentation_insideClass.Dispose();
+            output.AppendLine("}");
         }
 
         static IEnumerable<ImmutableArray<T>> Combinations<T>(ImmutableArray<T> source)
@@ -98,8 +112,9 @@ internal static partial class TypedMockGenerator
                 .Where((v, i) => (index & (1 << i)) != 0)
                 .ToImmutableArray());
         var combinations = Combinations(method.Parameters.Symbols);
+        var i = 0;
         foreach (var combination in combinations)
-            WriteMethodForPamameterCombination(new MethodParametersWritingContext(combination, method.Output));
+            WriteForPamameterCombination(new MethodParametersWritingContext(combination, method.Output), i++);
     }
 
     private static void WriteGenericTypeConstraints(IMethodSymbol method, int atIndentation, IndentingStringBuilder output)

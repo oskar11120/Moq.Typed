@@ -9,11 +9,11 @@ internal static partial class TypedMockGenerator
             {{generatedCodeAttribute}}
             internal sealed class {{feature.TypeName}}
             {
-                private readonly {{type.MockName}} mock;
+                internal readonly {{type.MockName}} Mock;
             
                 public {{feature.TypeName}}({{type.MockName}} mock)
                 {
-                    this.mock = mock;
+                    Mock = mock;
                 }
             }
             """);
