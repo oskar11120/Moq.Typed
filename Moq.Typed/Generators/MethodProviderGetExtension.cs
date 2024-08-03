@@ -2,7 +2,7 @@
 namespace Moq.Typed.Generators;
 internal static partial class TypedMockGenerator
 {
-    private static void WriteMockProviderExtension(FeatureWritingContext feature, IndentingStringBuilder output)
+    private static void WriteMethodProviderGetExtension(FeatureWritingContext feature, IndentingStringBuilder output)
     {
         var type = feature.Type;
         output.AppendLine($$"""

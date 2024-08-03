@@ -412,7 +412,7 @@ internal static partial class TypedMockGenerator
 
     private static void WriteFeature(FeatureWritingContext feature, IndentingStringBuilder output)
     {
-        WriteMockProviderExtension(feature, output);
+        WriteMethodProviderGetExtension(feature, output);
         var type = feature.Type;
         output.AppendLine($$"""
 
